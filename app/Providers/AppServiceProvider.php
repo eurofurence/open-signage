@@ -15,8 +15,10 @@ use App\Observers\RoomObserver;
 use App\Observers\RoomScreenObserver;
 use App\Observers\ScheduleObserver;
 use App\Observers\ScreenObserver;
+use App\Providers\Socialite\SocialiteIdentityProvider;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Notification;
+use Laravel\Socialite\Contracts\Factory;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -41,6 +43,12 @@ class AppServiceProvider extends ServiceProvider
 
         Notification::extend('admin', function ($app) {
             return new AdminChannel();
+        });
+
+        $socialite = $this->app->make(Factory::class);
+
+        $socialite->extend('identity', function () use ($socialite) {
+            return $socialite->buildProvider(SocialiteIdentityProvider::class, config('services.identity'));
         });
     }
 }
