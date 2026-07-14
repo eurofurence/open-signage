@@ -24,21 +24,19 @@ class UpdateScreenPlaylistEvent implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
-            new Channel('Screen.'.$this->screen->id),
+            new Channel('Screen.' . $this->screen->id),
         ];
     }
 
     public function broadcastAs()
     {
-        return 'page.update';
+        return 'playlist.switch';
     }
 
     public function broadcastWith()
     {
-        $screen = $this->screen->load('rooms');
         return [
-            'pages' => ScreenDataGenerator::pages($screen),
-            'screen' => ScreenDataGenerator::screen($screen),
+            'id' => $this->screen->playlist->id,
         ];
     }
 }

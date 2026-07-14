@@ -2,17 +2,17 @@
 import {
     defineAsyncComponent,
     ref,
-    watch,
     computed,
     onMounted,
-    resolveComponent,
     onUnmounted,
-    unref,
+    toRaw
 } from "vue";
 import None from "@/Projects/System/Layouts/None.vue";
 import Error from "@/Projects/System/Pages/Error.vue";
 import moment from "moment";
 import _ from "lodash";
+import {initAppState, useAppState} from "@/state.js";
+import {synced} from "@/synced.js";
 
 const props = defineProps({
     initialPages: {
@@ -38,16 +38,10 @@ const props = defineProps({
     },
 });
 
-const currentTime = ref(moment());
-const pages = ref(props.initialPages);
-const announcements = ref(props.initialAnnouncements);
+const state = useAppState();
 const schedule = ref(props.initialSchedule);
 const appScreen = ref(props.initialScreen);
 const artworks = ref(props.initialArtworks);
-const isConnected = ref(true);
-const connectionError = ref("");
-const version = ref(props.initialScreen.version);
-const pageSwitchTimer = ref(null);
 
 const ping = () => {
     window.axios
@@ -57,132 +51,143 @@ const ping = () => {
                 shared_secret: new URLSearchParams(window.location.search).get(
                     "shared_secret"
                 ),
-                version: version.value,
+                version: state.version,
             })
         )
-        .then((response) => (isConnected.value = true))
-        .catch((error) => {
-            isConnected.value = false;
-            connectionError.value = "Ping failed";
+        .then(() => {
+            state.lastPing = Date.now();
+            state.isConnected = true;
+        })
+        .catch(() => {
+            state.isConnected = false;
+            state.connectionError = "Ping failed";
         });
 };
+
+synced(0, 5000, () => {
+    state.currentTime = Date.now();
+});
 
 onMounted(() => {
     ping();
     const pingInterval = setInterval(ping, 60000);
-    const checkInterval = setInterval(() => {
-        currentTime.value = moment();
-    }, 1000);
-    onUnmounted(() => {
-        clearInterval(pingInterval);
-        clearInterval(checkInterval);
-    });
+    onUnmounted(() => clearInterval(pingInterval));
 });
 
 Echo.channel("ScreenAll")
-    .listen(".announcement.update", (e) => {
-        announcements.value = e.announcements;
-        version.value++;
+    .listen(".announcement.create", announcement => {
+        state.announcements.push(announcement);
+        state.version++;
     })
-    .listen(".schedule.update", (e) => {
-        schedule.value = e.schedule;
-        version.value++;
+    .listen(".announcement.update", announcement => {
+        state.announcements = state.announcements.map(old => old.id === announcement.id ? announcement : old);
+        state.version++;
+    })
+    .listen(".announcement.delete", announcement => {
+        state.announcements = state.announcements.filter(old => old.id !== announcement.id);
+        state.version++;
+    })
+    .listen(".artwork.create", artwork => {
+        state.artworks.push(artwork);
+        state.version++;
+    })
+    .listen(".artwork.update", artwork => {
+        state.artworks = state.artworks.map(old => old.id === artwork.id ? artwork : old);
+        state.version++;
+    })
+    .listen(".artwork.delete", artwork => {
+        state.artworks = state.artworks.filter(old => old.id !== artwork.id);
+        state.version++;
+    })
+    .listen(".schedule.create", scheduleEntry => {
+        state.schedule.push(scheduleEntry);
+
+        state.schedule.sort((a, b) => {
+            const timeCompare = a.starts_at.localeCompare(b.starts_at);
+
+            if (timeCompare !== 0) {
+                return timeCompare;
+            }
+
+            return a.title.localeCompare(b.title);
+        });
+
+        state.version++;
+    })
+    .listen(".schedule.update", scheduleEntry => {
+        state.schedule = state.schedule.map(old => old.id === scheduleEntry.id ? scheduleEntry : old);
+
+        state.schedule.sort((a, b) => {
+            const timeCompare = a.starts_at.localeCompare(b.starts_at);
+
+            if (timeCompare !== 0) {
+                return timeCompare;
+            }
+
+            return a.title.localeCompare(b.title);
+        });
+
+        state.version++;
+    })
+    .listen(".schedule.delete", scheduleEntry => {
+        state.schedule = state.schedule.filter(old => old.id !== scheduleEntry.id);
+        state.version++;
     });
 
 Echo.channel("Screen." + props.initialScreen.id)
     .listen(".screen.refresh", (e) => {
         window.location.reload();
     })
-    .listen(".artwork.update", (e) => {
-        artworks.value = e.artworks;
+    .listen(".playlist.switch", playlist => {
+        window.axios
+            .get(
+                route("api.playlist.get", {
+                    playlistId: playlist.id,
+                })
+            )
+            .then(response => {
+                state.playlist = response.data;
+                state.version++;
+                updatePlaylistItem();
+            })
+            .catch(() => window.location.reload());
     })
-    .listen(".page.update", (e) => {
-        activePageIndex.value = 0;
-        version.value++;
-        pages.value = e.pages;
-        appScreen.value = e.screen;
-        layouts = mapLayouts(mappedPages);
-        activePageIndex.value =
-            activePageIndex.value + (1 % pages.value.length);
+    .listen(".playlistItem.create", playlistItem => {
+        state.playlist.playlist_items.push(playlistItem);
+        state.version++;
+    })
+    .listen(".playlistItem.update", playlistItem => {
+        state.playlist.playlist_items = state.playlist.playlist_items.map(item => item.id === playlistItem.id ? playlistItem : item);
+        // const old = state.version;
+        state.version++;
+        // console.log(".playlistItem.update", old, state.version);
+    })
+    .listen(".playlistItem.delete", playlistItem => {
+        state.playlist.playlist_items = state.playlist.playlist_items.filter(item => item.id !== playlistItem.id);
+        state.version++;
     });
 
 window.Echo.connector.pusher.connection.bind("connecting", (payload) => {
-    isConnected.value = false;
-    connectionError.value = "Socket reconnecting";
+    state.isConnected = false;
+    state.connectionError = "Socket reconnecting";
 });
 
 window.Echo.connector.pusher.connection.bind("connected", (payload) => {
-    isConnected.value = true;
+    state.isConnected = true;
 });
 
 window.Echo.connector.pusher.connection.bind("unavailable", (payload) => {
-    isConnected.value = false;
-    connectionError.value = "Socket failed";
+    state.isConnected = false;
+    state.connectionError = "Socket failed";
 });
 
-const mappedPages = computed(() => {
-    return pages.value.map((page, index) => {
-        return {
-            ...page,
-            index: index,
-            resolvedComponent: defineAsyncComponent(() =>
-                import(`./Projects/${page.path}/Pages/${page.component}.vue`)
-            ),
-        };
-    });
-});
-
-function mapLayouts(mappedPages) {
-    let layouts = [];
-    mappedPages.value.forEach((page) => {
-        if (
-            !layouts.find(
-                (e) =>
-                    e.component === page.layout.component &&
-                    e.path === page.layout.path
-            )
-        ) {
-            layouts.push({
-                component: page.layout.component,
-                path: page.layout.path,
-            });
-        }
-    });
-    return layouts.map((layout) => {
-        return {
-            component: layout.component,
-            path: layout.path,
-            resolvedLayout: defineAsyncComponent(() =>
-                import(
-                    `./Projects/${layout.path}/Layouts/${layout.component}.vue`
-                )
-            ),
-        };
-    });
-}
-
-let layouts = mapLayouts(mappedPages);
-
-const activePageIndex = ref(0);
-
-const activePage = computed(() => pages.value[activePageIndex.value]);
-
-const activeLayout = computed(() => {
-    if (activePage.value === undefined) return None;
-
-    let layout = layouts.find(
-        (e) =>
-            e.component === activePage.value.layout.component &&
-            e.path === activePage.value.layout.path
-    );
-    return layout.resolvedLayout ?? None;
-});
-
-const activePageComponent = computed(() => {
-    if (activePage.value === undefined) return Error;
-
-    let page = mappedPages.value.find((e) => e.index === activePageIndex.value);
-    return page?.resolvedComponent ?? Error;
+const activePlaylistItems = computed(() => {
+    return state.playlist.playlist_items
+        .map((item, index) => ({index, ...item,}))
+        .filter(item => item.is_active)
+        .filter(item => !item.starts_at || state.currentTime >= new Date(item.starts_at).getTime())
+        .filter(item => !item.ends_at || state.currentTime <= new Date(item.ends_at).getTime())
+        .map(toRaw)
 });
 
 const rooms = computed(() => {
@@ -190,119 +195,101 @@ const rooms = computed(() => {
         return (
             // If room.pivot.starts_at exists, check if the current time is greater than or equal to it
             (!room.pivot.starts_at ||
-                currentTime.value.isSameOrAfter(
+                state.currentTime.isSameOrAfter(
                     moment(room.pivot.starts_at)
                 )) &&
             // If room.pivot.ends_at exists, check if the current time is less than or equal to it
             (!room.pivot.ends_at ||
-                currentTime.value.isSameOrBefore(moment(room.pivot.ends_at)))
+                state.currentTime.isSameOrBefore(moment(room.pivot.ends_at)))
         );
     });
 });
 
-function nextPage() {
-    activePageIndex.value = (activePageIndex.value + 1) % pages.value.length;
-}
+const cycleLength = computed(() => activePlaylistItems.value
+    .reduce((acc, item) => acc + parseInt(item.duration) * 1000, 0));
 
-watch(
-    activePageIndex,
-    (value, oldValue) => {
-        if (value === oldValue) return;
-        if (pages.value.length <= 1) return;
+let updatePlaylistItemTimeout = null;
+const currentPlaylistItem = ref(null);
 
-        // If current page does not match timing requirements skip to next page
-        if (
-            (activePage.value.starts_at &&
-                new Date(activePage.value.starts_at).getTime() >
-                    new Date().getTime()) ||
-            (activePage.value.ends_at &&
-                new Date(activePage.value.ends_at).getTime() <
-                    new Date().getTime())
-        ) {
-            console.log(
-                "Current page does not match timing requirements, skipping to next page"
-            );
-            activePageIndex.value = (value + 1) % pages.value.length;
+const updatePlaylistItem = () => {
+    const now = Date.now()
+    let period = Math.round(now) % cycleLength.value;
+    let index = -1;
+
+    while (period >= 0) {
+        index++;
+        period -= parseInt(activePlaylistItems.value[index].duration) * 1000;
+    }
+
+    if (index < 0) index = 0;
+    currentPlaylistItem.value = activePlaylistItems.value[index];
+    const rest = now - Date.now() + parseInt(activePlaylistItems.value[index].duration) * 1000;
+    updatePlaylistItemTimeout = setTimeout(updatePlaylistItem, rest < 1000 ? 1000 : rest);
+};
+
+onMounted(() => {
+    updatePlaylistItem();
+    onUnmounted(() => clearTimeout(updatePlaylistItemTimeout));
+});
+
+const layoutComponents = computed(() => state.playlist.playlist_items.reduce((acc, curr) => {
+    const id = curr.layout_id;
+    const path = `./Projects/${curr.layout.project.path}/Layouts/${curr.layout.component}.vue`;
+    if (acc[id]?.path === path) return acc;
+
+    return {
+        ...acc,
+        [id]: {
+            id, path,
+            component: defineAsyncComponent(() => import(path))
         }
+    };
+}, layoutComponents.value ?? {}));
 
-        console.log("Clearing Timeout");
-        clearTimeout(pageSwitchTimer.value);
+const pageComponents = computed(() => state.playlist.playlist_items.reduce((acc, curr) => {
+    const id = curr.page_id;
+    const path = `./Projects/${curr.page.project.path}/Pages/${curr.page.component}.vue`;
+    if (acc[id]?.path === path) return acc;
 
-        let validPageFound = false;
-        let skipPages = 0;
-        let nextPageIndex;
-
-        while (!validPageFound) {
-            console.log(
-                "Checking page " + ((value + skipPages) % pages.value.length)
-            );
-            skipPages++;
-
-            nextPageIndex = (value + skipPages) % pages.value.length;
-            console.log("Next page index: " + nextPageIndex);
-            const nextPage = pages.value[nextPageIndex] ?? null;
-
-            const currentTime = new Date().getTime();
-            const startsAtTime = nextPage.starts_at
-                ? new Date(nextPage.starts_at).getTime()
-                : null;
-            const endsAtTime = nextPage.ends_at
-                ? new Date(nextPage.ends_at).getTime()
-                : null;
-
-            if (startsAtTime && endsAtTime) {
-                if (currentTime >= startsAtTime && currentTime <= endsAtTime) {
-                    console.log("Page between both start and end time found");
-                    validPageFound = true;
-                }
-            } else if (startsAtTime) {
-                // Only starts_at is set
-                if (currentTime >= startsAtTime) {
-                    console.log("Page after start time found");
-                    validPageFound = true;
-                }
-            } else if (endsAtTime) {
-                // Only ends_at is set
-                if (currentTime <= endsAtTime) {
-                    console.log("Page before end time found");
-                    validPageFound = true;
-                }
-            } else {
-                console.log("Page without time found");
-                validPageFound = true;
-            }
+    return {
+        ...acc,
+        [id]: {
+            id, path: path,
+            component: defineAsyncComponent(() => import(path))
         }
+    };
+}, pageComponents.value ?? {}));
 
-        console.log("Setting Timeout");
-        pageSwitchTimer.value = setTimeout(() => {
-            nextPageIndex = nextPageIndex % pages.value.length;
-            console.log("Switching to page " + nextPageIndex);
-            activePageIndex.value = nextPageIndex;
-        }, (activePage.value?.duration ?? pages.value[0].duration) * 1000);
-    },
-    { immediate: true }
-);
+const activeLayout = computed(() => layoutComponents.value[currentPlaylistItem.value?.layout_id] ?? {component: None});
+const activePageComponent = computed(() => pageComponents.value[currentPlaylistItem.value?.page_id] ?? {component: Error});
 </script>
 
 <template>
     <div
-        v-if="isConnected === false"
+        v-if="state.isConnected === false"
         class="bg-black z-50 absolute top-0 left p-1 px-4 font-bold text-white rounded-br"
     >
-        Reconnecting... ({{ connectionError }})
+        Reconnecting... ({{ state.connectionError }})
     </div>
     <Transition>
         <component
-            :connected="isConnected"
-            v-show="activePageComponent"
+            :connected="state.isConnected"
+            v-show="activePageComponent.component"
             :appScreen="appScreen"
-            :rooms="rooms"
-            :schedule="schedule"
-            :artworks="artworks"
-            :announcements="announcements"
-            :page="mappedPages[activePageIndex] ?? { resolvedComponent: Error }"
-            :is="activeLayout"
-        ></component>
+            :page="currentPlaylistItem ?? {component: Error}"
+            :is="activeLayout.component"
+            :key="activeLayout.id"
+        >
+            <component
+                :key="currentPlaylistItem?.id"
+                :is="activePageComponent.component"
+                v-bind="currentPlaylistItem?.content"
+                :appScreen="appScreen"
+                :rooms="rooms"
+                :schedule="state.schedule"
+                :artworks="state.artworks"
+            />
+        </component>
     </Transition>
 </template>
 
@@ -314,14 +301,19 @@ body {
     @apply bg-stone-800;
 }
 
+/* Used by Vue3 for transitions */
+
+/*noinspection CssUnusedSymbol*/
 .v-enter-active {
     transition: opacity 1s ease-in;
 }
 
+/*noinspection CssUnusedSymbol*/
 .v-leave-active {
     transition: opacity 0.5s ease-out;
 }
 
+/*noinspection CssUnusedSymbol*/
 .v-enter-from,
 .v-leave-to {
     opacity: 0;

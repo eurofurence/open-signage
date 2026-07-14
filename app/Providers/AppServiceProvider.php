@@ -4,12 +4,13 @@ namespace App\Providers;
 
 use App\Channels\AdminChannel;
 use App\Models\Announcement;
+use App\Models\Artwork;
 use App\Models\PlaylistItem;
-use App\Models\Room;
 use App\Models\RoomScreen;
 use App\Models\ScheduleEntry;
 use App\Models\Screen;
 use App\Observers\AnnouncementObserver;
+use App\Observers\ArtworkObserver;
 use App\Observers\PlaylistItemObserver;
 use App\Observers\RoomObserver;
 use App\Observers\RoomScreenObserver;
@@ -38,6 +39,7 @@ class AppServiceProvider extends ServiceProvider
         Screen::observe(ScreenObserver::class);
         PlaylistItem::observe(PlaylistItemObserver::class);
         Announcement::observe(AnnouncementObserver::class);
+        Artwork::observe(ArtworkObserver::class);
         ScheduleEntry::observe(ScheduleObserver::class);
         RoomScreen::observe(RoomScreenObserver::class);
 

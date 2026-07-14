@@ -3,7 +3,6 @@
 namespace App\Events;
 
 use App\Models\ScheduleEntry;
-use App\Services\ScreenDataGenerator;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
@@ -16,7 +15,7 @@ class UpdateScheduleEvent implements ShouldBroadcast
     use InteractsWithSockets;
     use SerializesModels;
 
-    public function __construct()
+    public function __construct(public readonly ScheduleEntry $scheduleEntry, public readonly string $action)
     {
     }
 
@@ -29,13 +28,12 @@ class UpdateScheduleEvent implements ShouldBroadcast
 
     public function broadcastAs()
     {
-        return 'schedule.update';
+        return 'schedule.' . $this->action;
     }
 
     public function broadcastWith()
     {
-        return [
-            'schedule' => ScreenDataGenerator::schedule(),
-        ];
+        $this->scheduleEntry->loadMissing(['room']);
+        return $this->scheduleEntry->toArray();
     }
 }

@@ -2,11 +2,9 @@
 
 namespace App\Observers;
 
-use App\Events\UpdateScreenPlaylistEvent;
+use App\Events\UpdatePlaylistItemEvent;
 use App\Jobs\ConvertAnyFileJob;
-use App\Models\Playlist;
 use App\Models\PlaylistItem;
-use App\Models\Screen;
 use Illuminate\Support\Facades\Bus;
 
 class PlaylistItemObserver
@@ -15,7 +13,7 @@ class PlaylistItemObserver
     {
         Bus::chain([
             fn () => ConvertAnyFileJob::dispatch(),
-            fn () => $playlistItem->playlist->screens->each(fn (Screen $screen) => broadcast(new UpdateScreenPlaylistEvent($screen))),
+            fn () => broadcast(new UpdatePlaylistItemEvent($playlistItem, 'create')),
         ])->dispatch();
     }
 
@@ -24,13 +22,13 @@ class PlaylistItemObserver
         // Get Playlist from PlaylistItem and then Screen from Playlist and run broadcast on each
         Bus::chain([
             fn () => ConvertAnyFileJob::dispatch(),
-            fn () => $playlistItem->playlist->screens->each(fn (Screen $screen) => broadcast(new UpdateScreenPlaylistEvent($screen))),
+            fn () => broadcast(new UpdatePlaylistItemEvent($playlistItem, 'update')),
         ])->dispatch();
     }
 
     public function deleted(PlaylistItem $playlistItem): void
     {
-        $playlistItem->playlist->screens->each(fn (Screen $screen) => broadcast(new UpdateScreenPlaylistEvent($screen)));
+        broadcast(new UpdatePlaylistItemEvent($playlistItem, 'delete'));
     }
 
     public function restored(PlaylistItem $playlistItem): void

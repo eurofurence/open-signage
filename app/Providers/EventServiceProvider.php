@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Events\UpdateArtworkEvent;
+use App\Events\UpdatePlaylistItemEvent;
 use App\Listeners\Screens\ScreenStatusOffline;
 use App\Listeners\Screens\NotifyAdminScreenOffline;
 use App\Events\Screens\OnlineEvent;
@@ -57,6 +59,12 @@ class EventServiceProvider extends ServiceProvider
             IncreaseVersionListener::class,
         ],
         UpdateScreenPlaylistEvent::class => [
+            IncreaseVersionListener::class,
+        ],
+        UpdatePlaylistItemEvent::class => [
+            IncreaseVersionListener::class,
+        ],
+        UpdateArtworkEvent::class => [
             IncreaseVersionListener::class,
         ],
     ];

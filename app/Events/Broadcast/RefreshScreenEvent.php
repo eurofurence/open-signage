@@ -24,8 +24,13 @@ class RefreshScreenEvent implements ShouldBroadcast
         ];
     }
 
-    public function broadcastAs()
+    public function broadcastAs(): string
     {
         return 'screen.refresh';
+    }
+
+    public function broadcastWith(): array
+    {
+        return [];
     }
 }

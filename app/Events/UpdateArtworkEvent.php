@@ -2,24 +2,24 @@
 
 namespace App\Events;
 
-use App\Models\Announcement;
+use App\Models\Artwork;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class UpdateAnnouncementEvent implements ShouldBroadcast
+class UpdateArtworkEvent implements ShouldBroadcast
 {
     use Dispatchable;
     use InteractsWithSockets;
     use SerializesModels;
 
-    public function __construct(public readonly Announcement $announcement, public readonly string $action)
+    public function __construct(public readonly Artwork $artwork, public readonly string $action)
     {
     }
 
-    public function broadcastOn(): array
+    public function broadcastOn()
     {
         return [
             new Channel('ScreenAll'),
@@ -28,11 +28,11 @@ class UpdateAnnouncementEvent implements ShouldBroadcast
 
     public function broadcastAs(): string
     {
-        return 'announcement.' . $this->action;
+        return 'artwork.' . $this->action;
     }
 
     public function broadcastWith(): array
     {
-        return $this->announcement->toArray();
+        return $this->artwork->toArray();
     }
 }
