@@ -6,9 +6,6 @@ use App\Enums\ScreenStatusEnum;
 use App\Events\Broadcast\RefreshScreenEvent;
 use App\Events\Screens\FirstPingEvent;
 use App\Events\Screens\OnlineEvent;
-use App\Events\UpdateAnnouncementEvent;
-use App\Events\UpdateScheduleEvent;
-use App\Events\UpdateScreenPlaylistEvent;
 use App\Http\Controllers\Controller;
 use App\Models\Screen;
 use Illuminate\Http\Request;
@@ -30,11 +27,10 @@ class PingController extends Controller
             event(new FirstPingEvent($screen)); // Fire the OnlineEvent event
         }
 
-        $version = $request->get('version');
-        if ($version) {
-            if($version < $screen->version) {
-                broadcast(new RefreshScreenEvent($screen));
-            }
+        $version = (int) $request->get('version');
+
+        if ($version && $version !== $screen->version) {
+            broadcast(new RefreshScreenEvent($screen));
         }
     }
 }
