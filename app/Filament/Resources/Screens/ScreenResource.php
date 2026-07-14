@@ -101,6 +101,10 @@ class ScreenResource extends Resource
                         ->label('MAC Address'),
                 ]),
 
+                TextEntry::make('version')
+                    ->label('Config Version')
+                    ->state(fn(?Screen $record): string => $record?->version ?? '-'),
+
                 TextEntry::make('created_at')
                     ->label('Created Date')
                     ->state(fn(?Screen $record): string => $record?->created_at?->diffForHumans() ?? '-'),
