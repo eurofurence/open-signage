@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\IdentityController;
 use App\Http\Controllers\ScreenController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -31,3 +32,10 @@ Route::get('/', function () {
 
 Route::get('timetable', \App\Http\Controllers\TimetableController::class)->name('timetable');
 Route::get('efsched', \App\Http\Controllers\EurofurenceScheduleController::class)->name('efsched');
+
+if (config('services.identity.enabled') === true) {
+    Route::prefix('/auth')->group(function () {
+        Route::get('/redirect', [IdentityController::class, 'redirect'])->name('identity.redirect');
+        Route::get('/callback', [IdentityController::class, 'callback'])->name('identity.callback');
+    });
+}
