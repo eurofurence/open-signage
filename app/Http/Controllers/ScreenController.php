@@ -2,15 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Announcement;
-use App\Models\Artwork;
-use App\Models\PlaylistItem;
-use App\Models\ScheduleEntry;
 use App\Models\Screen;
 use App\Services\ScreenDataGenerator;
 use App\Settings\GeneralSettings;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class ScreenController extends Controller
@@ -30,6 +25,7 @@ class ScreenController extends Controller
         return Inertia::render('Main', [
             'initialPages' => ScreenDataGenerator::pages($screen),
             'initialScreen' => ScreenDataGenerator::screen($screen),
+            'initialPlaylist' => ScreenDataGenerator::playlist($screen),
             'initialArtworks' => ScreenDataGenerator::artworks(),
             'initialAnnouncements' => ScreenDataGenerator::announcements(),
             'initialSchedule' => ScreenDataGenerator::schedule()
