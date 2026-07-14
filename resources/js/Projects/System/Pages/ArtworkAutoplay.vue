@@ -1,11 +1,8 @@
 <script setup>
 import {computed, onMounted, ref} from "vue";
+import {useAppState} from "@/state.js";
 
 const props = defineProps({
-    artworks: {
-        type: Array,
-        required: false
-    },
     appScreen: {
         type: Object,
         required: true
@@ -28,6 +25,7 @@ screen.orientation.onchange = () => {
     console.log(screen.orientation);
 }
 
+const state = useAppState();
 const screenOrientation = ref("vertical");
 
 onMounted(() => {
@@ -53,7 +51,7 @@ const handleOrientationChange = () => {
 }
 
 const artworksFilteredWithoutMissingOrientation = computed(() => {
-    let filteredArt = props.artworks.filter(artwork => {
+    let filteredArt = state.artworks.filter(artwork => {
         return artwork[screenOrientation.value] !== null
     })
     // Randomize the order of the artworks
