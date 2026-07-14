@@ -35,4 +35,15 @@ return [
         'token' => env('TELEGRAM_BOT_TOKEN',null),
         'chat_id' => env('TELEGRAM_CHAT_ID',null),
     ],
+
+    'identity' => [
+        'enabled' => env('IDENTITY_ENABLED', false),
+        'openid_configuration' => env('IDENTITY_OPENID_CONFIGURATION'),
+        'client_id' => env('IDENTITY_CLIENT_ID'),
+        'client_secret' => env('IDENTITY_CLIENT_SECRET'),
+        'redirect' => env('IDENTITY_CALLBACK_URL'),
+        'allowed_groups' => env('IDENTITY_ALLOWED_GROUPS', ''),
+        'create_users' => env('IDENTITY_CREATE_USERS', false),
+        'disable_password_login' => env('IDENTITY_DISABLE_PASSWORD_LOGIN', false),
+    ],
 ];
