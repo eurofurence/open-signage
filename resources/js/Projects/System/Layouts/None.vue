@@ -19,24 +19,9 @@ const usableAttributes = computed(() => {
 </script>
 
 <template>
-    <div class="h-screen overflow-hidden bg-primary flex flex-col flex-grow">
+    <div class="h-screen overflow-hidden bg-[#005953] flex flex-col flex-grow">
         <Transition mode="out-in">
-            <component :is="page.resolvedComponent" v-bind="usableAttributes"></component>
+            <slot></slot>
         </Transition>
     </div>
 </template>
-
-<style>
-.v-enter-active {
-    transition: opacity 1s ease-in;
-}
-
-.v-leave-active {
-    transition: opacity 0.5s ease-out;
-}
-
-.v-enter-from,
-.v-leave-to {
-    opacity: 0;
-}
-</style>
