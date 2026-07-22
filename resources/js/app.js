@@ -23,7 +23,7 @@ createInertiaApp({
             .use(ZiggyVue, Ziggy);
         Sentry.init({
             app,
-            dsn: "https://ee18fdfcc9b751a59e877bf305223229@o94350.ingest.sentry.io/4505788620341248",
+            dsn: "https://4353dd8344d1220a90805d9894143c8c@sentry.eurofurence.org/14",
         });
         app.mount(el);
         return app;
