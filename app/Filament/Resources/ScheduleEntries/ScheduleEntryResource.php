@@ -2,7 +2,12 @@
 
 namespace App\Filament\Resources\ScheduleEntries;
 
+use App\Models\Project;
+use App\Models\Room;
+use Carbon\CarbonInterval;
+use Filament\Actions\Action;
 use Filament\Infolists\Components\TextEntry;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
@@ -13,13 +18,11 @@ use Filament\Actions\DeleteAction;
 use App\Filament\Resources\ScheduleEntries\Pages\ListScheduleEntries;
 use App\Filament\Resources\ScheduleEntries\Pages\CreateScheduleEntry;
 use App\Filament\Resources\ScheduleEntries\Pages\EditScheduleEntry;
-use App\Filament\Resources\ScheduleEntryResource\Pages;
 use App\Models\Playlist;
 use App\Models\PlaylistItem;
 use App\Models\ScheduleEntry;
 use App\Models\Screen;
 use App\Settings\GeneralSettings;
-use Filament\Forms\Components\Builder;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\ColorPicker;
@@ -32,14 +35,16 @@ use Filament\Resources\Resource;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Log;
 
 class ScheduleEntryResource extends Resource
 {
     protected static ?string $model = ScheduleEntry::class;
 
-    protected static string | \UnitEnum | null $navigationGroup = 'Content';
+    protected static string|\UnitEnum|null $navigationGroup = 'Content';
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-m-table-cells';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-m-table-cells';
 
     protected static ?string $slug = 'schedule-entries';
 
@@ -56,11 +61,16 @@ class ScheduleEntryResource extends Resource
                         Textarea::make('description'),
 
                         Select::make('room_id')
-                            ->relationship('room', 'name')
+                            ->relationship('room', 'name', modifyQueryUsing: fn(Builder $query, Get $get) => $query->where('project_id', $get('project_id')))
                             ->required()
-                            ->createOptionForm(fn(Schema $schema) => $schema->components([
+                            ->createOptionForm(fn(Schema $schema, Get $get) => $schema->components([
                                 TextInput::make('name')
                                     ->required(),
+                                Select::make('project_id')
+                                    ->relationship('project', 'name')
+                                    ->default(fn() => $get('project_id'))
+                                    ->required()
+                                    ->disabled()
                             ]))
                             ->editOptionForm(fn(Schema $schema) => $schema->components([
                                 TextInput::make('name')
@@ -93,6 +103,13 @@ class ScheduleEntryResource extends Resource
                                     ->required(),
                             ]))->helperText('Color is used for the background in the timetable.'),
 
+                        Select::make('project_id')
+                            ->relationship('project', 'name'),
+
+                        TextInput::make('external_id')
+                            ->label('External ID')
+                            ->helperText('Pretalx ID. Do not touch unless you know what you are doing!')
+                            ->integer()
                     ])->columnSpan(1),
                     Group::make([
                         Section::make('Event Time')->schema([
@@ -162,7 +179,23 @@ class ScheduleEntryResource extends Resource
                             ->required()
                             ->numeric()
                             ->suffix('minutes')
-                            ->hint('Use in combination with delay'),
+                            ->hintAction(Action::make('realizeDelay')
+                                ->label('Realize Delay')
+                                ->requiresConfirmation()
+                                ->visible(function (ScheduleEntry $entry) {
+                                    return $entry->delay > 0;
+                                })
+                                ->action(function (ScheduleEntry $entry, Set $set) {
+                                    $delay = CarbonInterval::make($entry->delay, 'minutes');
+                                    $entry->starts_at = $entry->starts_at->add($delay);
+                                    $entry->ends_at = $entry->ends_at->add($delay);
+                                    $entry->delay = 0;
+                                    $entry->save();
+
+                                    $set('starts_at', $entry->starts_at);
+                                    $set('ends_at', $entry->ends_at);
+                                    $set('delay', $entry->delay);
+                                })),
 
                         Textarea::make('message')
                             ->helperText('Use in combination with delay (will be displayed as delay reason) or cancelled (as cancel reason).'),
@@ -216,6 +249,8 @@ class ScheduleEntryResource extends Resource
                 SelectFilter::make('room_id')->multiple()->preload()->label('Rooms')->relationship('room', 'name'),
                 SelectFilter::make('schedule_type_id')->multiple()->preload()->label('Schedule Types')->relationship('scheduleType',
                     'name'),
+                SelectFilter::make('project_id')->multiple()->preload()->label('Projects')->relationship('project', 'name')
+                    ->default(Project::where('path', config('app.default_project'))->firstOrFail()->id),
             ])->recordActions([
                 EditAction::make(),
                 ReplicateAction::make(),

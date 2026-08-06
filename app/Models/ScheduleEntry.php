@@ -44,4 +44,9 @@ class ScheduleEntry extends Model
     {
         return $this->belongsTo(ScheduleOrganizer::class);
     }
+
+    public function project()
+    {
+        return $this->belongsTo(Project::class);
+    }
 }

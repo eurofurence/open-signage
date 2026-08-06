@@ -2,6 +2,9 @@
 
 namespace App\Filament\Resources\Screens\RelationManagers;
 
+use App\Models\Project;
+use App\Models\Room;
+use Filament\Schemas\Components\Wizard;
 use Filament\Schemas\Schema;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\DateTimePicker;
@@ -20,6 +23,7 @@ use Filament\Forms;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class RoomsRelationManager extends RelationManager
 {
@@ -100,7 +104,11 @@ class RoomsRelationManager extends RelationManager
                 //
             ])
             ->headerActions([
-                AttachAction::make(),
+                AttachAction::make()
+                    ->recordSelectOptionsQuery(fn(Builder $query) => $query->where(
+                        'project_id',
+                        Project::where('path', config('app.default_project'))->firstOrFail()->id,
+                    )),
             ])
             ->recordActions([
                 EditAction::make(),

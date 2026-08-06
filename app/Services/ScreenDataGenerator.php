@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Announcement;
 use App\Models\Artwork;
 use App\Models\PlaylistItem;
+use App\Models\Project;
 use App\Models\ScheduleEntry;
 use App\Models\Screen;
 use Illuminate\Support\Facades\Storage;
@@ -72,8 +73,8 @@ class ScreenDataGenerator
 
     public static function schedule(): array
     {
-        return ScheduleEntry::with([
-            'room', 'scheduleType', 'scheduleOrganizer'
-        ])->orderBy('starts_at')->get()->toArray();
+        return ScheduleEntry::with(['room', 'scheduleType', 'scheduleOrganizer'])
+            ->where('project_id', Project::where('path', config('app.default_project'))->firstOrFail()->id)
+            ->orderBy('starts_at')->get()->toArray();
     }
 }

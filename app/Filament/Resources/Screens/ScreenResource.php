@@ -2,7 +2,9 @@
 
 namespace App\Filament\Resources\Screens;
 
+use App\Models\Project;
 use Filament\Infolists\Components\TextEntry;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Section;
 use Filament\Support\Enums\TextSize;
@@ -45,9 +47,9 @@ class ScreenResource extends Resource
 {
     protected static ?string $model = Screen::class;
 
-    protected static string | \UnitEnum | null $navigationGroup = 'Programming';
+    protected static string|\UnitEnum|null $navigationGroup = 'Programming';
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-computer-desktop';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-computer-desktop';
 
     protected static ?string $slug = 'screens';
 
@@ -58,7 +60,7 @@ class ScreenResource extends Resource
         return $schema
             ->components([
                 Select::make('playlist_id')
-                    ->relationship('playlist', 'name', fn ($query) => $query->normal())
+                    ->relationship('playlist', 'name', fn($query) => $query->normal())
                     ->preload()
                     ->searchable()
                     ->required(),
@@ -71,7 +73,10 @@ class ScreenResource extends Resource
                     ->relationship('screenGroup', 'name'),
 
                 Select::make('room_id')
-                    ->relationship('room', 'name')
+                    ->relationship('room', 'name', modifyQueryUsing: fn(Builder $query) => $query->where(
+                        'project_id',
+                        Project::where('path', config('app.default_project'))->firstOrFail()->id
+                    ))
                     ->preload()
                     ->label('Primary Room')
                     ->hint('Will be used to display room related information on the screen.')
@@ -79,7 +84,7 @@ class ScreenResource extends Resource
 
                 TextInput::make('slug')
                     ->hint('This is the URL that will be used to access this screen.')
-                    ->prefix(config('app.url').'/screens/')
+                    ->prefix(config('app.url') . '/screens/')
                     ->required(),
 
                 Select::make('orientation')->required()->selectablePlaceholder(false)->options([
@@ -144,7 +149,7 @@ class ScreenResource extends Resource
 
                 TextColumn::make('mode')
                     ->badge()
-                    ->visible(fn() => Screen::whereHas('playlist.project', fn(Builder $query) => $query->where('type','=',ResourceOwnership::EMERGENCY))->exists())
+                    ->visible(fn() => Screen::whereHas('playlist.project', fn(Builder $query) => $query->where('type', '=', ResourceOwnership::EMERGENCY))->exists())
                     ->alignStart()
                     ->size(TextSize::Large)
                     ->state(fn(Screen $screen) => $screen->isEmergency() ? $screen->playlist->name : 'Normal')
@@ -161,11 +166,11 @@ class ScreenResource extends Resource
                 SelectColumn::make('playlist_id')
                     ->label('Playlist')
                     ->selectablePlaceholder(false)
-                    ->disabled(fn (Screen $screen) => $screen->isEmergency())
-                    ->options(fn (Screen $screen) => Playlist::query()
+                    ->disabled(fn(Screen $screen) => $screen->isEmergency())
+                    ->options(fn(Screen $screen) => Playlist::query()
                         ->whereHas('playlistItems')
                         ->normal()
-                        ->when($screen?->playlist_id, fn ($query) => $query->orWhere('id', $screen->playlist_id))
+                        ->when($screen?->playlist_id, fn($query) => $query->orWhere('id', $screen->playlist_id))
                         ->pluck('name', 'id')
                         ->toArray()),
 
@@ -226,7 +231,7 @@ class ScreenResource extends Resource
                     ))
                     ->action(function (
                         Collection $records
-                    ,$data) {
+                        ,          $data) {
                         $records->each(fn(Screen $screen) => $screen->update(array('playlist_id' => $data['playlist_id'])));
                         return Redirect::route('filament.admin.resources.screens.index');
                     }),
@@ -269,7 +274,7 @@ class ScreenResource extends Resource
                         ->modalSubmitActionLabel('Confirm Send Alert')
                         ->action(fn(
                             Collection $records,
-                            array $data
+                            array      $data
                         ) => SetEmergencyPlaylistJob::dispatchSync(Auth::user(),
                             EmergencyTypeEnum::CUSTOM,
                             $records,
