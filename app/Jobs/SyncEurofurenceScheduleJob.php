@@ -2,22 +2,17 @@
 
 namespace App\Jobs;
 
-use App\Events\UpdateAnnouncementEvent;
-use App\Events\UpdateScheduleEvent;
-use App\Models\Announcement;
+use App\Models\Project;
 use App\Models\Room;
 use App\Models\ScheduleEntry;
+use Carbon\CarbonInterval;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Http\Client\Pool;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Str;
 
 class SyncEurofurenceScheduleJob implements ShouldQueue
 {
@@ -29,171 +24,78 @@ class SyncEurofurenceScheduleJob implements ShouldQueue
 
     public function handle(): void
     {
-        // geteventjson get the whole pre-planed ef event schedule should not be changed during the con, can be checked only once a while
-        $efScheduleJson = Http::get('https://6al.de/efsched/geteventjson')->json();
+        $pretalxDomain = config('services.pretalx.domain');
+        $pretalxSchedule = config('services.pretalx.schedule');
+        $scheduleJsonUrl = "https://$pretalxDomain/$pretalxSchedule/api/schedule";
 
-        // getconnews represents the official announcement channel and should be checked frequently, contains delays of events.
-        $efConNewsJson = Http::get('https://6al.de/efsched/getconnews')->json();
+        $schedule = Http::get($scheduleJsonUrl)->json();
 
-        /**
-         * Order Schedule
-         */
-        $efSchedule = $this->getEfSchedule($efScheduleJson);
+        $project = Project::where('path', config('app.default_project'))->firstOrFail();
 
-        /**
-         * Sync Schedule
-         */
-        $rooms = $this->scheduleRooms($efSchedule);
-
-        /**
-         * Insert Schedule Events
-         */
-        $data = $efSchedule->map(fn($schedule) => [
-            "id" => $schedule['event_id'],
-            "room_id" => $rooms[$this->getConferenceRoomString($schedule['conference_room'])]['id'],
-            "starts_at" => $schedule['start_time'],
-            "ends_at" => $schedule['end_time'],
-            "title" => $schedule['title'],
-            "flags" => "{}",
-            "automation" => "{}"
-        ])->toArray();
-        ScheduleEntry::upsert($data, "id", ["room_id", "starts_at", "ends_at", "title"]);
-
-        /**
-         * Announcements
-         */
-        $conNews = $this->getEfAnnouncements($efConNewsJson);
-        $knownAnnouncementIds = Announcement::whereIn('id', $conNews->pluck('id'))->pluck('id');
-        $newAnnouncements = $conNews->reject(fn($announcement) => $knownAnnouncementIds->contains($announcement['id']));
-        $newAnnouncements->filter(fn($v) => isset($v['delay']))
-            ->each(function ($announcement) {
-                ScheduleEntry::where('id', $announcement['event_id'])
-                    ->increment('delay', $announcement['delay']);
-            });
-
-        Announcement::upsert($conNews->map(fn($announcement) => [
-            "id" => $announcement['id'],
-            "title" => $announcement['title'],
-            "content" => $announcement['content'],
-            "starts_at" => $announcement['starts_at'] ?? now(),
-            "ends_at" => $announcement['ends_at'] ?? now(),
-        ])->toArray(), "id", ["title", "content", "starts_at", "ends_at"]);
-
-        if ($newAnnouncements->count() > 0) {
-            broadcast(new UpdateAnnouncementEvent());
-            broadcast(new UpdateScheduleEvent());
-        }
-    }
-
-    private function scheduleRooms($efSchedule)
-    {
-        $roomData = $efSchedule->pluck('conference_room')->unique()->map(function ($conferenceRoom) use ($efSchedule) {
-            $rooms = Str::of($conferenceRoom)
-                ->split("/[‑–—‐−‐–—⸺|‖•‣]/")
-                ->reject(fn($state) => empty($state))
-                ->map(fn($state) => Str::of($state)->replaceMatches('/\s+/', ' ')->trim()->toString())
-                ->values()
-                ->toArray();
-
-            return [
-                'external_name' => $this->getConferenceRoomString($conferenceRoom),
-                'name' => $rooms[0],
-                'venue_name' => $rooms[1] ?? $rooms[0],
-            ];
-        })->toArray();
-        Room::upsert($roomData, "external_name", ["name", "venue_name"]);
-        return Room::all()->keyBy('external_name')->toArray();
-    }
-
-    /**
-     * @param $conferenceRoom
-     * @return string
-     */
-    private function getConferenceRoomString($conferenceRoom): string
-    {
-        return Str::of($conferenceRoom)->replaceMatches('/\s+/', ' ')->lower()->trim()->slug()->toString();
-    }
-
-    /**
-     * @param  mixed  $efScheduleJson
-     * @return mixed
-     */
-    public function getEfSchedule(mixed $efScheduleJson)
-    {
-        $efSchedule = collect($efScheduleJson)
-            ->map(function ($efScheduleEntry) {
-                $day = Carbon::parse($efScheduleEntry['day']);
-                $startTime = Carbon::parse($efScheduleEntry['start_time'])->setDateFrom($day);
-                $endTime = Carbon::parse($efScheduleEntry['end_time'])->setDateFrom($day);
-                $endTime->lt($startTime) && $endTime->addDay();
-                unset($efScheduleEntry['description']);
+        $scheduleRooms = array_values(array_reduce($schedule['days'], function ($carry, $day) use ($project) {
+            $scheduleRooms = array_map(function ($slot) use ($project) {
                 return [
-                    ...$efScheduleEntry,
-                    "title" => Str::of($efScheduleEntry['title'])->replaceMatches('/\s+/', ' ')->trim()->toString(),
-                    "conference_room" => Str::of($efScheduleEntry['conference_room'])->replaceMatches('/\s+/',
-                        ' ')->trim()->toString(),
-                    "start_time" => $startTime,
-                    "end_time" => $endTime,
+                    'project_id' => $project->id,
+                    'external_id' => $slot['room']['id'],
+                    'name' => $slot['room']['name'],
                 ];
-            })
-            ->groupBy(function ($efScheduleEntry) {
-                return Str::slug($efScheduleEntry['title'].'-'.$efScheduleEntry['conference_room']);
-            })
-            // Merge events that are directly after each other
-            ->flatMap(function ($efScheduleEntries) {
-                $eventGroup = collect($efScheduleEntries)->sortBy('start_time')->values()->toArray();
+            }, $day['slots']);
 
-                $merged = [];
-                $currentEvent = null;
+            foreach ($scheduleRooms as $room) {
+                $carry[$room['external_id']] = $room;
+            }
 
-                foreach ($eventGroup as $event) {
-                    if (!$currentEvent) {
-                        $currentEvent = $event;
-                        continue;
-                    }
+            return $carry;
+        }, []));
 
-                    // Check if the current event's end time matches the next event's start time
-                    if ($currentEvent['end_time']->eq($event['start_time'])) {
-                        $currentEvent['end_time'] = $event['end_time'];
-                    } else {
-                        $merged[] = $currentEvent;
-                        $currentEvent = $event;
+        Room::upsert($scheduleRooms, 'external_id', ['name']);
+
+        $scheduleEntries = array_reduce($schedule['days'], function ($carry, $day) use ($project) {
+            $scheduleEntries = array_map(function ($slot) use ($project) {
+                $slot["start"] = new Carbon($slot["start"]);
+                $slot["end"] = new Carbon($slot["end"]);
+                $slot["delay"] = 0;
+
+                $room = Room::where('project_id', $project->id)
+                    ->where('external_id', $slot['room']['id'])
+                    ->firstOrFail();
+
+                if (config('app.enable_delay_detection')) {
+                    $currentEntry = ScheduleEntry::where('project_id', $project->id)
+                        ->where('external_id', $slot['id'])
+                        ->first();
+
+                    if ($currentEntry) {
+                        $delay = $currentEntry->starts_at->diff($slot['start']);
+                        $inLessThanFourHours = $currentEntry->starts_at->diff(Carbon::now())->compare(CarbonInterval::make("4 hours")) <= 0;
+                        $lessThanFourHoursDelay = $delay->compare(CarbonInterval::make("4 hours")) <= 0;
+
+                        if ($currentEntry->delay >= 0 || ($inLessThanFourHours && $lessThanFourHoursDelay)) {
+                            $length = $slot['start']->diff($slot['end']);
+                            $slot['start'] = $currentEntry->starts_at;
+                            $slot['end'] = $currentEntry->starts_at->add($length);
+                            $slot['delay'] = $delay->floor('minutes')->total('minutes');
+                        }
                     }
                 }
 
-                if ($currentEvent) {
-                    $merged[] = $currentEvent;
-                }
-
-                return $merged;
-            })
-            ->sortBy('start_time');
-        return $efSchedule;
-    }
-
-    public function getEfAnnouncements($efConNews)
-    {
-        return collect($efConNews)
-            ->map(function ($efConNewsEntry) {
-                $data = [
-                    "id" => $efConNewsEntry['id'],
-                    "title" => $efConNewsEntry['news']['title'],
-                    "content" => $efConNewsEntry['news']['message'],
-                    "starts_at" => Carbon::createFromTimestamp($efConNewsEntry['date']),
-                    "ends_at" => Carbon::createFromTimestamp($efConNewsEntry['news']['valid_until']),
+                return [
+                    'project_id' => $project->id,
+                    'external_id' => $slot['id'],
+                    'room_id' => $room->id,
+                    'title' => $slot['title'],
+                    'description' => $slot['description'],
+                    'starts_at' => $slot['start'],
+                    'ends_at' => $slot['end'],
+                    'automation' => '{}',
+                    'flags' => '{}',
+                    'delay' => $slot['delay'],
                 ];
+            }, $day['slots']);
 
-                if (isset($efConNewsEntry['data']['event_id'])) {
-                    $data['event_id'] = $efConNewsEntry['data']['event_id'];
-                }
+            return array_merge($carry, $scheduleEntries);
+        }, []);
 
-                if (isset($efConNewsEntry['data']['delay'])) {
-                    $data['delay'] = $efConNewsEntry['data']['delay'];
-                }
-
-                return $data;
-            })
-            ->sortBy('start_time');
-
+        ScheduleEntry::upsert($scheduleEntries, 'external_id', ['room_id', 'title', 'description', 'delay', 'starts_at', 'ends_at']);
     }
 }

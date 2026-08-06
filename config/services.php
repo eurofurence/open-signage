@@ -46,4 +46,9 @@ return [
         'create_users' => env('IDENTITY_CREATE_USERS', false),
         'disable_password_login' => env('IDENTITY_DISABLE_PASSWORD_LOGIN', false),
     ],
+
+    'pretalx' => [
+        'domain' => env('PRETALX_DOMAIN', "cfp.eurofurence.org"),
+        'schedule' => env('PRETALX_SCHEDULE'),
+    ]
 ];
