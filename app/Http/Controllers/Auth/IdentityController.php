@@ -35,6 +35,7 @@ class IdentityController extends Controller
             'user' => $user,
             'groups' => $user->groups,
             'allowed_groups' => $allowed_groups,
+            'avatar_url' => $user->avatar,
         ]);
 
         if (!array_reduce($user->groups, fn ($carry, $group) => $carry || in_array($group, $allowed_groups, true), false)) {
@@ -54,6 +55,9 @@ class IdentityController extends Controller
         } else if ($dbUser === null) {
             return redirect('/admin');
         }
+
+        $dbUser->avatar_url = $user->avatar;
+        $dbUser->save();
 
         Auth::login($dbUser);
 

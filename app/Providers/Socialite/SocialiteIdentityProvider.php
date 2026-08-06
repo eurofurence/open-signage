@@ -4,7 +4,6 @@ namespace App\Providers\Socialite;
 
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 use Laravel\Socialite\Two\AbstractProvider;
 use Laravel\Socialite\Two\User;
 
@@ -84,12 +83,11 @@ class SocialiteIdentityProvider extends AbstractProvider
 
     protected function mapUserToObject(array $user)
     {
-        Log::info("User", $user);
-
         return (new User)->setRaw($user)->map([
             'id' => $user['sub'],
             'email' => $user['email'],
             'email_verified' => $user['email_verified'],
+            'avatar' => $user['avatar'],
             'name' => $user['name'],
             'groups' => $user['groups'],
         ]);
