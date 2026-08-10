@@ -9,9 +9,9 @@ export default defineConfig({
         // no target option: managed by @vitejs/plugin-legacy
         rollupOptions: {
             output: {
-                entryFileNames: 'js/[name].js',
-                chunkFileNames: 'js/[name].js',
-                assetFileNames: 'js/[name].[ext]',
+                entryFileNames: 'js/[name]-[hash].js',
+                chunkFileNames: 'js/[name]-[hash].js',
+                assetFileNames: 'js/[name]-[hash][extname]',
             },
         },
     },
