@@ -68,12 +68,27 @@ class SocialiteIdentityProvider extends AbstractProvider
         return $this->getIdentityConfig()->tokenEndpoint;
     }
 
+    /**
+     * The identity server only accepts client_secret_basic authentication
+     */
+    protected function getTokenHeaders($code)
+    {
+        return array_merge(parent::getTokenHeaders($code), [
+            'Authorization' => 'Basic ' . base64_encode(rawurlencode($this->clientId) . ':' . rawurlencode($this->clientSecret)),
+        ]);
+    }
+
+    protected function getTokenFields($code)
+    {
+        return array_diff_key(parent::getTokenFields($code), array_flip(['client_id', 'client_secret']));
+    }
+
     protected function getUserByToken($token)
     {
         $response = $this->getHttpClient()->get($this->getIdentityConfig()->userinfoEndpoint, [
             'headers' => [
                 'cache-control' => 'no-cache',
-                'Authorization' => 'Bearer '.$token,
+                'Authorization' => 'Bearer ' . $token,
                 'Content-Type' => 'application/x-www-form-urlencoded',
             ],
         ]);
