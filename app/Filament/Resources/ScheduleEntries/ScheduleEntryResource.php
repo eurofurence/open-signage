@@ -109,7 +109,7 @@ class ScheduleEntryResource extends Resource
                         TextInput::make('external_id')
                             ->label('External ID')
                             ->helperText('Pretalx ID. Do not touch unless you know what you are doing!')
-                            ->integer()
+                            ->string(),
                     ])->columnSpan(1),
                     Group::make([
                         Section::make('Event Time')->schema([
@@ -228,7 +228,8 @@ class ScheduleEntryResource extends Resource
                 TextColumn::make('room.name')
                     ->sortable()->searchable(),
 
-                TextColumn::make('scheduleType.name')
+                TextColumn::make('external_id')
+                    ->label('External ID')
                     ->sortable()->searchable(),
 
                 TextColumn::make('starts_at')

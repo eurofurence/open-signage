@@ -81,7 +81,7 @@ class SyncEurofurenceScheduleJob implements ShouldQueue
 
                 return [
                     'project_id' => $project->id,
-                    'external_id' => $slot['id'],
+                    'external_id' => $slot['code'],
                     'room_id' => $room->id,
                     'title' => $slot['title'],
                     'description' => $slot['description'],
