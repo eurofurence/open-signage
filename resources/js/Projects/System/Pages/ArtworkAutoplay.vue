@@ -1,5 +1,7 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { Hooper, Slide } from 'hooper-vue3';
+import 'hooper-vue3/dist/hooper.css';
 import { useAppState } from '@/state.js';
 
 const props = defineProps({
@@ -20,13 +22,9 @@ const props = defineProps({
 });
 
 const state = useAppState();
-const screenOrientation = ref('vertical');
-
-const setScreenOrientation = () => {
-  if (props.appScreen.orientation === 'normal' || props.appScreen.orientation === 'inverted') {
-    screenOrientation.value = 'horizontal';
-  }
-};
+const isScreenHorizontal = props.appScreen.orientation === 'normal' || props.appScreen.orientation === 'inverted';
+const screenOrientation = ref(isScreenHorizontal ? 'horizontal' : 'vertical');
+const carousel = ref(null);
 
 const handleOrientationChange = () => {
   if (screen.orientation.angle === 90) {
@@ -36,9 +34,23 @@ const handleOrientationChange = () => {
   }
 };
 
+const stopCarousel = instance => {
+  if (!instance) return;
+  if (instance.timer) instance.timer.stop();
+  window.removeEventListener('resize', instance.update);
+};
+
+watch(carousel, (current, previous) => {
+  if (previous && previous !== current) stopCarousel(previous);
+});
+
 onMounted(() => {
-  setScreenOrientation();
   window.addEventListener('orientationchange', handleOrientationChange);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener('orientationchange', handleOrientationChange);
+  stopCarousel(carousel.value);
 });
 
 const artworksFilteredWithoutMissingOrientation = computed(() => {
@@ -48,14 +60,13 @@ const artworksFilteredWithoutMissingOrientation = computed(() => {
   // Randomize the order of the artworks
   return filteredArt.sort(() => Math.random() - 0.5);
 });
-
-import { Hooper, Slide } from 'hooper-vue3';
-import 'hooper-vue3/dist/hooper.css';
 </script>
 
 <template>
   <div class="h-screen">
     <Hooper
+      v-if="artworksFilteredWithoutMissingOrientation.length > 0"
+      ref="carousel"
       :mouse-drag="false"
       :hover-pause="false"
       :keys-control="false"
