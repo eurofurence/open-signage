@@ -33,7 +33,7 @@ const orientationClass = computed(() => {
       </div>
     </div>
 
-    <div class="stage-content h-screen overflow-auto bg-transparent flex flex-col flex-grow">
+    <div class="h-screen overflow-auto bg-transparent flex flex-col flex-grow">
       <slot></slot>
     </div>
   </div>
@@ -41,28 +41,28 @@ const orientationClass = computed(() => {
 
 <style scoped>
 .stage {
-  --frame-width: 108vw;
-  --frame-min-width: 178vh;
+  --frame-width: 110vw;
+  --frame-min-width: 196vh;
   --frame-rotate: none;
 }
 
 @media (orientation: portrait) {
   .stage {
-    --frame-width: 108vh;
-    --frame-min-width: 178vw;
+    --frame-width: 110vh;
+    --frame-min-width: 196vw;
     --frame-rotate: rotate(90deg);
   }
 }
 
 .stage.stage-landscape {
-  --frame-width: 108vw;
-  --frame-min-width: 178vh;
+  --frame-width: 110vw;
+  --frame-min-width: 196vh;
   --frame-rotate: none;
 }
 
 .stage.stage-portrait {
-  --frame-width: 108vh;
-  --frame-min-width: 178vw;
+  --frame-width: 110vh;
+  --frame-min-width: 196vw;
   --frame-rotate: rotate(90deg);
 }
 
@@ -78,62 +78,59 @@ const orientationClass = computed(() => {
 }
 
 .stage-back {
-  z-index: 0;
+  z-index: -2;
 }
 
 .stage-frame {
-  z-index: 1;
+  z-index: -1;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.stage-content {
-  position: relative;
-  z-index: 2;
-}
-
 .stage-back-image {
   position: absolute;
-  left: -32px;
-  top: -20px;
-  width: calc(100% + 64px);
-  height: calc(100% + 40px);
+  left: -48px;
+  top: -32px;
+  width: calc(100% + 96px);
+  max-width: none;
+  height: calc(100% + 64px);
   object-fit: cover;
   will-change: transform;
-  animation: back-drift 41s ease-in-out infinite alternate;
+  animation: back-drift 34s ease-in-out infinite alternate;
 }
 
 .stage-frame-drift {
   flex: none;
   will-change: transform;
-  animation: frame-drift 29s ease-in-out infinite alternate;
+  animation: frame-drift 24s ease-in-out infinite alternate;
 }
 
 .stage-frame-image {
   display: block;
   width: var(--frame-width);
   min-width: var(--frame-min-width);
+  max-width: none;
   transform: var(--frame-rotate);
 }
 
 @keyframes back-drift {
   from {
-    transform: translate3d(-8px, -5px, 0);
+    transform: translate3d(-14px, -8px, 0);
   }
 
   to {
-    transform: translate3d(8px, 5px, 0);
+    transform: translate3d(14px, 8px, 0);
   }
 }
 
 @keyframes frame-drift {
   from {
-    transform: translate3d(-16px, -8px, 0);
+    transform: translate3d(-24px, -14px, 0);
   }
 
   to {
-    transform: translate3d(16px, 8px, 0);
+    transform: translate3d(24px, 14px, 0);
   }
 }
 </style>
