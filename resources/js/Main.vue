@@ -1,5 +1,5 @@
 <script setup>
-import { defineAsyncComponent, ref, computed, onMounted, onUnmounted, toRaw } from 'vue';
+import { ref, computed, onMounted, onUnmounted, toRaw } from 'vue';
 import None from '@/Projects/System/Layouts/None.vue';
 import Error from '@/Projects/System/Pages/Error.vue';
 import moment from 'moment';
@@ -219,6 +219,11 @@ onMounted(() => {
   onUnmounted(() => clearTimeout(updatePlaylistItemTimeout));
 });
 
+const projectComponents = {
+  ...import.meta.glob('./Projects/*/Layouts/*.vue', { eager: true }),
+  ...import.meta.glob('./Projects/*/Pages/*.vue', { eager: true }),
+};
+
 const layoutComponents = computed(() =>
   state.playlist.playlist_items.reduce((acc, curr) => {
     const id = curr.layout_id;
@@ -230,7 +235,7 @@ const layoutComponents = computed(() =>
       [id]: {
         id,
         path,
-        component: defineAsyncComponent(() => import(path)),
+        component: projectComponents[path]?.default ?? None,
       },
     };
   }, layoutComponents.value ?? {}),
@@ -247,7 +252,7 @@ const pageComponents = computed(() =>
       [id]: {
         id,
         path,
-        component: defineAsyncComponent(() => import(path)),
+        component: projectComponents[path]?.default ?? Error,
       },
     };
   }, pageComponents.value ?? {}),

@@ -1,5 +1,7 @@
 <script setup>
-import { computed, defineAsyncComponent } from 'vue';
+import { computed } from 'vue';
+
+const icons = import.meta.glob('../../*/Components/Icons/*.svg', { eager: true });
 
 defineOptions({
   inheritAttrs: false,
@@ -29,12 +31,17 @@ const icon = computed(() => {
 });
 
 function resolveComponent(name) {
-  return defineAsyncComponent(() => import(`../../${props.path}/Components/Icons/${name}.svg`));
+  return icons[`../../${props.path}/Components/Icons/${name}.svg`]?.default;
 }
 </script>
 
 <template>
-  <component v-bind="$attrs" :is="icon" :style="`transform: ${mirror ? 'scaleX(-1)' : ''} rotate(${rotation}deg)`" />
+  <component
+    v-if="icon"
+    v-bind="$attrs"
+    :is="icon"
+    :style="`transform: ${mirror ? 'scaleX(-1)' : ''} rotate(${rotation}deg)`"
+  />
 </template>
 
 <style scoped></style>

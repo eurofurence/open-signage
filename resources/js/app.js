@@ -1,3 +1,4 @@
+import 'core-js/stable';
 import './bootstrap.js';
 import { createApp, h } from 'vue';
 import { createInertiaApp } from '@inertiajs/vue3';
@@ -5,11 +6,10 @@ import { ZiggyVue } from '../../vendor/tightenco/ziggy';
 import * as Sentry from '@sentry/vue';
 import Main from './Main.vue';
 
-import.meta.glob(['./Projects/**/Assets/**']);
+import.meta.glob(['./Projects/**/Assets/**'], { eager: true, query: '?url', import: 'default' });
+import.meta.glob('./Projects/*/app.css', { eager: true });
 
 const appName = 'Open Signage';
-const appPath = import.meta.env.VITE_PROJECT_PATH;
-import(`./Projects/${appPath}/app.css`);
 
 createInertiaApp({
   title: () => appName,

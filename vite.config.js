@@ -10,6 +10,7 @@ export default defineConfig({
     sourcemap: true,
     rollupOptions: {
       output: {
+        inlineDynamicImports: true,
         entryFileNames: 'js/[name]-[hash].js',
         chunkFileNames: 'js/[name]-[hash].js',
         assetFileNames: 'js/[name]-[hash][extname]',
@@ -32,7 +33,7 @@ export default defineConfig({
     }),
     legacy({
       modernTargets: 'chrome >= 71',
-      modernPolyfills: true,
+      modernPolyfills: false,
       renderLegacyChunks: false,
     }),
     svgLoader(),
