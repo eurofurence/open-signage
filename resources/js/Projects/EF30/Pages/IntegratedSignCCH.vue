@@ -35,8 +35,6 @@ const currentTime = ref(DateTime.now());
 const currentPageIndex = ref(0);
 
 function getNextEventForRoom(room, timeObject) {
-  console.log(props.schedule);
-
   return _.cloneDeep(props.schedule)
     .filter(event => {
       return event.room_id === room.id;
@@ -51,7 +49,6 @@ function getNextEventForRoom(room, timeObject) {
     })
     .map(event => {
       const eventCopy = toRaw(event);
-      // console.log(event.title);
       eventCopy.title = eventCopy.title
         ? eventCopy.title
             .replace("Dealers' Den & Art Show", '')
@@ -74,8 +71,6 @@ function getNextEventForRoom(room, timeObject) {
 }
 
 const populatedRooms = computed(() => {
-  console.log(props.rooms);
-
   return _.cloneDeep(props.rooms).map(room => {
     room.nextEvent = getNextEventForRoom(room, currentTime.value);
     return room;

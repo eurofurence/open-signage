@@ -147,9 +147,7 @@ window.Echo.channel(`Screen.${props.initialScreen.id}`)
     state.playlist.playlist_items = state.playlist.playlist_items.map(item =>
       item.id === playlistItem.id ? playlistItem : item,
     );
-    // const old = state.version;
     state.version++;
-    // console.log(".playlistItem.update", old, state.version);
   })
   .listen('.playlistItem.delete', playlistItem => {
     state.playlist.playlist_items = state.playlist.playlist_items.filter(item => item.id !== playlistItem.id);

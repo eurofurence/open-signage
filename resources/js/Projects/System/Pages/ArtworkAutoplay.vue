@@ -19,12 +19,6 @@ const props = defineProps({
   },
 });
 
-// If screen orientation changes, we need to recompute the screenType
-screen.orientation.onchange = () => {
-  console.log('Orientation changed');
-  console.log(screen.orientation);
-};
-
 const state = useAppState();
 const screenOrientation = ref('vertical');
 
