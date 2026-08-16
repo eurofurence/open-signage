@@ -15,7 +15,7 @@ const props = defineProps({
     default: [],
   },
   pageSwitchingTimer: {
-    type: Number,
+    type: [Number, String],
     default: 15000,
   },
   lookaheadHours: {
@@ -32,6 +32,7 @@ const currentTime = ref(DateTime.now());
 const currentPageIndex = ref(0);
 
 const lookaheadHours = computed(() => Number(props.lookaheadHours) || 12);
+const pageSwitchingTimer = computed(() => Number(props.pageSwitchingTimer) || 15000);
 
 const filteredEvents = computed(() => {
   return _.cloneDeep(props.schedule)
@@ -44,7 +45,7 @@ const filteredEvents = computed(() => {
     })
     .map(event => {
       if (event.room.name.includes(event.title) || event.title.includes(event.room.name)) {
-        if (event.room.name !== event.room.venue_name) {
+        if (event.room.venue_name && event.room.name !== event.room.venue_name) {
           event.room.name = event.room.venue_name;
         }
       }
@@ -79,7 +80,7 @@ const schedulePages = computed(() => {
 });
 
 const currentSlide = computed(() => {
-  return schedulePages.value[currentPageIndex.value];
+  return schedulePages.value[currentPageIndex.value] ?? [];
 });
 
 onMounted(() => {
@@ -87,8 +88,9 @@ onMounted(() => {
     currentTime.value = DateTime.now();
   }, 5000);
   const pageSwitcher = setInterval(() => {
-    currentPageIndex.value = (currentPageIndex.value + 1) % schedulePages.value.length;
-  }, props.pageSwitchingTimer);
+    const pageCount = schedulePages.value.length;
+    currentPageIndex.value = pageCount === 0 ? 0 : (currentPageIndex.value + 1) % pageCount;
+  }, pageSwitchingTimer.value);
   onUnmounted(() => {
     clearInterval(interval);
     clearInterval(pageSwitcher);

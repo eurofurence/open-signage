@@ -33,7 +33,7 @@ class UpdateScheduleEvent implements ShouldBroadcast
 
     public function broadcastWith()
     {
-        $this->scheduleEntry->loadMissing(['room']);
+        $this->scheduleEntry->loadMissing(['room', 'scheduleType', 'scheduleOrganizer']);
         return $this->scheduleEntry->toArray();
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Events\UpdateScheduleEvent;
 use App\Models\Project;
 use App\Models\Room;
 use App\Models\ScheduleEntry;
@@ -106,6 +107,39 @@ class SyncEurofurenceScheduleJob implements ShouldQueue
             return array_merge($carry, $scheduleEntries);
         }, []);
 
+        $externalIds = array_column($scheduleEntries, 'external_id');
+
+        $signaturesBefore = ScheduleEntry::where('project_id', $project->id)
+            ->whereIn('external_id', $externalIds)
+            ->get()
+            ->mapWithKeys(fn(ScheduleEntry $entry) => [$entry->external_id => $this->signature($entry)]);
+
         ScheduleEntry::upsert($scheduleEntries, 'external_id', ['room_id', 'title', 'description', 'delay', 'starts_at', 'ends_at']);
+
+        ScheduleEntry::with('room')
+            ->where('project_id', $project->id)
+            ->whereIn('external_id', $externalIds)
+            ->get()
+            ->each(function (ScheduleEntry $entry) use ($signaturesBefore) {
+                $before = $signaturesBefore->get($entry->external_id);
+
+                if ($before === $this->signature($entry)) {
+                    return;
+                }
+
+                broadcast(new UpdateScheduleEvent($entry, is_null($before) ? 'create' : 'update'));
+            });
+    }
+
+    private function signature(ScheduleEntry $entry): string
+    {
+        return implode('|', [
+            $entry->room_id,
+            $entry->title,
+            $entry->description,
+            $entry->starts_at?->toIso8601String(),
+            $entry->ends_at?->toIso8601String(),
+            $entry->delay,
+        ]);
     }
 }
