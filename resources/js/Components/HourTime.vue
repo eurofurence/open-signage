@@ -9,5 +9,3 @@ const options = {
 <template>
   <span>{{ new Date(time).toLocaleTimeString('de-DE', options) }}</span>
 </template>
-
-<style scoped></style>

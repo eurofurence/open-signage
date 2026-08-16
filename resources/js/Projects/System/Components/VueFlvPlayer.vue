@@ -112,5 +112,3 @@ export default {
   activated() {},
 };
 </script>
-
-<style></style>

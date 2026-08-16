@@ -26,10 +26,10 @@ const announcement = synced(state.announcements, props.playSpeed);
       :key="announcement.id"
       class="h-full flex flex-col justify-center items-center text-primary-200"
     >
-      <h1 class="themeFont text-[128pt] mb-12 text-center">
+      <h1 class="theme-font text-[128pt] mb-12 text-center">
         {{ announcement.title }}
       </h1>
-      <p class="font-semibold themeFontSecondary leading-normal mx-auto whitespace-pre-wrap text-[88pt] text-center">
+      <p class="font-semibold theme-font-secondary leading-normal mx-auto whitespace-pre-wrap text-[88pt] text-center">
         {{ announcement.content }}
       </p>
     </div>

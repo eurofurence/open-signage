@@ -132,8 +132,8 @@ function getTime() {
 </script>
 
 <template>
-  <div class="absolute z-[10000] top-4 right-5 text-7xl flex flex-row items-end text-white themeFont">
-    <div class="flex flex-col text-right justify-end items-end clockContainer">
+  <div class="absolute z-[10000] top-4 right-5 text-7xl flex flex-row items-end text-white theme-font">
+    <div class="flex flex-col text-right justify-end items-end clock-container">
       <div id="line0" class="flex digitline">
         <span ref="h10" class="fade-in">0</span>
         <span ref="h00" class="fade-in">0</span>
@@ -158,7 +158,7 @@ function getTime() {
 </template>
 
 <style scoped>
-.clockContainer {
+.clock-container {
   width: 5ch;
   height: 1em;
   user-select: none;
@@ -173,6 +173,7 @@ function getTime() {
     opacity: 0;
     filter: 'blur(20px)';
   }
+
   to {
     opacity: 1;
     filter: 'blur(0px)';
@@ -188,6 +189,7 @@ function getTime() {
     opacity: 1;
     filter: 'blur(0px)';
   }
+
   to {
     opacity: 0;
     filter: 'blur(20px)';

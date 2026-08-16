@@ -23,5 +23,3 @@ function getTime() {
 <template>
   <span>{{ clock }}</span>
 </template>
-
-<style scoped></style>

@@ -85,7 +85,7 @@ onMounted(() => {
     <div :key="currentPageIndex" class="h-screen overflow-hidden flex flex-col justify-between w-screen">
       <div
         v-for="(item, _index) in currentSignPostPage"
-        class="flex flex-col relative z-30 text-white magic-text themeFont w-[100vw]"
+        class="flex flex-col relative z-30 text-white magic-text theme-font w-[100vw]"
       >
         <div class="mx-12 my-8 flex flex-row flex-nowrap items-center">
           <div v-if="item.pivot.icon" class="min-w-[200px] mr-6">
@@ -175,8 +175,6 @@ onMounted(() => {
 </style>
 
 <style>
-@reference "../theme.css";
-
 body {
   overflow: hidden;
   @apply bg-primary;

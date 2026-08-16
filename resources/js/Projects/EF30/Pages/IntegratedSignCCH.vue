@@ -138,7 +138,7 @@ function onLeave(node, done) {
           v-for="item in currentSlide"
           :key="item.id"
           class="flex flex-col text-white magic-text anim"
-          :class="[isThemeFont ? 'themeFont' : 'themeFontSecondary']"
+          :class="[isThemeFont ? 'theme-font' : 'theme-font-secondary']"
         >
           <div class="flex text-[9vw] text-justify">
             {{ item.name }}
@@ -189,6 +189,7 @@ function onLeave(node, done) {
 .list-leave-active {
   transition: all 5s ease;
 }
+
 .list-enter-from,
 .list-leave-to {
   opacity: 0;
@@ -196,8 +197,6 @@ function onLeave(node, done) {
 </style>
 
 <style>
-@reference "../theme.css";
-
 body {
   overflow: hidden;
   @apply bg-primary;

@@ -29,9 +29,9 @@ defineProps({
     :class="{ 'text-center': centerContent }"
   >
     <div class="p-16" :class="{ 'bg-white bg-opacity-80 max-w-7xl mx-auto min-h-full': useContainer }">
-      <h1 class="themeFont text-[128pt] mb-12 text-center" :class="headerSize">{{ title }}</h1>
+      <h1 class="theme-font text-[128pt] mb-12 text-center" :class="headerSize">{{ title }}</h1>
       <div
-        class="font-semibold themeFontSecondary leading-normal mx-auto whitespace-pre-wrap text-[88pt] text-center"
+        class="font-semibold theme-font-secondary leading-normal mx-auto whitespace-pre-wrap text-[88pt] text-center"
         :class="textSize"
       >
         <div class="textscreen" v-html="text"></div>

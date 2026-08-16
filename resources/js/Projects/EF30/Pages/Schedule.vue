@@ -143,10 +143,10 @@ function onLeave(node, done) {
           v-for="item in currentSlide"
           :key="item.id"
           class="flex flex-row space_text items-start items-baseline"
-          :class="[isThemeFont ? 'themeFont' : 'themeFontSecondary']"
+          :class="[isThemeFont ? 'theme-font' : 'theme-font-secondary']"
         >
           <div class="relative flex flex-col flex-auto schedule_entry pl-32 pr-16 pt-8">
-            <div class="relative flex flex-row flex-nowrap text-center align-top headingFont text-6xl schedule_title">
+            <div class="relative flex flex-row flex-nowrap text-center align-top heading-font text-6xl schedule_title">
               {{ item.title }}
             </div>
             <div class="relative flex flex-row flex-nowrap text-justify align-top text-4xl subtext">
@@ -201,6 +201,7 @@ function onLeave(node, done) {
 .list-leave-active {
   transition: all 5s ease;
 }
+
 .list-enter-from,
 .list-leave-to {
   opacity: 0;
@@ -208,8 +209,6 @@ function onLeave(node, done) {
 </style>
 
 <style>
-@reference "../theme.css";
-
 body {
   overflow: hidden;
   @apply bg-primary;

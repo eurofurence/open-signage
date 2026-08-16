@@ -11,7 +11,7 @@
   font-weight: 100 900;
   src:
     local("Octosale"),
-    url(./Assets/fonts/OCTOSALE-LV114.OTF) format("opentype");
+    url("./Assets/fonts/OCTOSALE-LV114.OTF") format("opentype");
 }
 
 /* Body face, one @font-face per shipped weight. */
@@ -21,16 +21,16 @@
   font-weight: 300;
   src:
     local("DINNextRoundedLTPro-Light"),
-    url(./Assets/fonts/DIN-NEXT-ROUNDED-LT-PRO-LIGHT.TTF) format("truetype");
+    url("./Assets/fonts/DIN-NEXT-ROUNDED-LT-PRO-LIGHT.TTF") format("truetype");
 }
 
 @font-face {
   font-family: "primaryThemeFont";
   font-style: normal;
-  font-weight: 400;
+  font-weight: normal;
   src:
     local("DINNextRoundedLTPro-Regular"),
-    url(./Assets/fonts/DIN-NEXT-ROUNDED-LT-PRO-REGULAR.TTF) format("truetype");
+    url("./Assets/fonts/DIN-NEXT-ROUNDED-LT-PRO-REGULAR.TTF") format("truetype");
 }
 
 @font-face {
@@ -39,39 +39,39 @@
   font-weight: 500;
   src:
     local("DINNextRoundedLTPro-Medium"),
-    url(./Assets/fonts/DIN-NEXT-ROUNDED-LT-PRO-MEDIUM.TTF) format("truetype");
+    url("./Assets/fonts/DIN-NEXT-ROUNDED-LT-PRO-MEDIUM.TTF") format("truetype");
 }
 
 @font-face {
   font-family: "primaryThemeFont";
   font-style: normal;
-  font-weight: 700;
+  font-weight: bold;
   src:
     local("DINNextRoundedLTPro-Bold"),
-    url(./Assets/fonts/DIN-NEXT-ROUNDED-LT-PRO-BOLD.TTF) format("truetype");
+    url("./Assets/fonts/DIN-NEXT-ROUNDED-LT-PRO-BOLD.TTF") format("truetype");
 }
 
-.themeFont {
+.theme-font {
   font-family: "headingThemeFont", "primaryThemeFont", sans-serif;
   line-height: 1.2;
 }
 
-.themeFontSecondary {
+.theme-font-secondary {
   font-family:
     "primaryThemeFont",
     -apple-system,
     BlinkMacSystemFont,
     "Segoe UI",
-    Roboto,
+    "Roboto",
     "Helvetica Neue",
-    Arial,
+    "Arial",
     "Noto Sans",
     sans-serif;
   font-weight: 500;
   line-height: 1.5;
 }
 
-.headingFont {
+.heading-font {
   font-family: "headingThemeFont", "primaryThemeFont", sans-serif;
   line-height: 1.2;
 }

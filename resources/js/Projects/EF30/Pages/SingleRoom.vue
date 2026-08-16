@@ -65,11 +65,11 @@ const nextEvent = computed(() => {
   <div class="text-white z-50 overflow-hidden h-full" v-if="nextEvent">
     <div
       v-if="nextEvent.title"
-      class="flex flex-col items-center justify-around p-4 overflow-hidden h-screen z-50 themeFont leading-none"
+      class="flex flex-col items-center justify-around p-4 overflow-hidden h-screen z-50 theme-font leading-none"
     >
       <div
         v-if="nextEvent.room.name !== nextEvent.title && showRoomName"
-        class="text-[10vw] leading-none font-bold text-center neonTubeColor headingFont"
+        class="text-[10vw] leading-none font-bold text-center neonTubeColor heading-font"
       >
         {{ nextEvent.room.name }}
       </div>
@@ -110,5 +110,3 @@ const nextEvent = computed(() => {
     <div v-else>Test</div>
   </div>
 </template>
-
-<style scoped></style>

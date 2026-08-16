@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "lint": "eslint .",
+    "lint": "eslint . && stylelint \"resources/**/*.{css,vue}\"",
+    "lint:fix": "eslint . --fix && stylelint \"resources/**/*.{css,vue}\" --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
@@ -36,7 +37,11 @@
     "globals": "^17.11.0",
     "laravel-vite-plugin": "^2.1.0",
     "postcss": "^8.5.26",
+    "postcss-html": "^2.0.0",
     "prettier": "^3.9.6",
+    "stylelint": "^17.14.1",
+    "stylelint-config-recommended": "^18.0.0",
+    "stylelint-no-unsupported-browser-features": "^8.1.1",
     "tailwindcss": "^3.4.19",
     "terser": "^5.50.0",
     "vite": "^7.3.6",

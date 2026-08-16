@@ -295,8 +295,6 @@ const activePageComponent = computed(
 </template>
 
 <style>
-@reference "tailwindcss";
-
 body {
   overflow: hidden;
   @apply bg-stone-800;
@@ -304,17 +302,17 @@ body {
 
 /* Used by Vue3 for transitions */
 
-/*noinspection CssUnusedSymbol*/
+/* noinspection CssUnusedSymbol */
 .v-enter-active {
   transition: opacity 1s ease-in;
 }
 
-/*noinspection CssUnusedSymbol*/
+/* noinspection CssUnusedSymbol */
 .v-leave-active {
   transition: opacity 0.5s ease-out;
 }
 
-/*noinspection CssUnusedSymbol*/
+/* noinspection CssUnusedSymbol */
 .v-enter-from,
 .v-leave-to {
   opacity: 0;

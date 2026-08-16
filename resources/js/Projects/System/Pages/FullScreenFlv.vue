@@ -24,5 +24,3 @@ const mediaDataSource = {
     />
   </div>
 </template>
-
-<style scoped></style>

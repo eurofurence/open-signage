@@ -10,5 +10,3 @@ defineProps(['title', 'message']);
     </div>
   </div>
 </template>
-
-<style scoped></style>

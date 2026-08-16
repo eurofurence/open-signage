@@ -43,5 +43,3 @@ function resolveComponent(name) {
     :style="`transform: ${mirror ? 'scaleX(-1)' : ''} rotate(${rotation}deg)`"
   />
 </template>
-
-<style scoped></style>

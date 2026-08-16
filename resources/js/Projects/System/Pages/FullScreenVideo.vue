@@ -14,5 +14,3 @@ defineProps({
     </video>
   </div>
 </template>
-
-<style scoped></style>

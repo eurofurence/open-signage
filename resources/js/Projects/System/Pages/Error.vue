@@ -5,5 +5,3 @@
     <div class="text-white text-9xl">Page not found.</div>
   </div>
 </template>
-
-<style scoped></style>

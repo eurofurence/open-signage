@@ -161,7 +161,7 @@ function entryInPast(entry) {
                       <div class="text-white text-sm">
                         <div v-if="isCurrentTimeBetween(panel.starts_at, panel.ends_at, panel.delay ?? 0)">
                           <div
-                            class="flex bg-green-600 rounded font-bold w-fit justify-between items-center align-middle gap-2 px-2 themeFontSecondary"
+                            class="flex bg-green-600 rounded font-bold w-fit justify-between items-center align-middle gap-2 px-2 theme-font-secondary"
                           >
                             <div class="animate-blink rounded-full bg-white h-3 w-3"></div>
                             <div class="whitespace-nowrap">NOW</div>
@@ -245,7 +245,7 @@ function entryInPast(entry) {
 
 *::-webkit-scrollbar-thumb {
   background-color: #feff99;
-  border-radius: 0px;
+  border-radius: 0;
   border: none;
 }
 
@@ -258,9 +258,11 @@ function entryInPast(entry) {
   0% {
     opacity: 0;
   }
+
   50% {
     opacity: 1;
   }
+
   100% {
     opacity: 0;
   }
