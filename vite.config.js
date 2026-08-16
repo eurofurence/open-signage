@@ -1,17 +1,19 @@
 import {defineConfig} from 'vite';
 import laravel from 'laravel-vite-plugin';
 import vue from '@vitejs/plugin-vue';
+import legacy from '@vitejs/plugin-legacy';
 import svgLoader from 'vite-svg-loader';
 
 export default defineConfig({
     build: {
-        target: ['chrome67', 'safari12', 'es2015'],
-        // rollup options, no asset versioning
+        // no target option: managed by @vitejs/plugin-legacy
+        sourcemap: true,
         rollupOptions: {
             output: {
-                entryFileNames: 'js/[name].js',
-                chunkFileNames: 'js/[name].js',
-                assetFileNames: 'js/[name].[ext]',
+                entryFileNames: 'js/[name]-[hash].js',
+                chunkFileNames: 'js/[name]-[hash].js',
+                assetFileNames: 'js/[name]-[hash][extname]',
+                sourcemapExcludeSources: true, // sourceless sourcemaps: only file names and lines
             },
         },
     },
@@ -29,6 +31,11 @@ export default defineConfig({
                     includeAbsolute: false,
                 },
             },
+        }),
+        legacy({
+            modernTargets: 'chrome >= 71',
+            modernPolyfills: true,
+            renderLegacyChunks: false,
         }),
         svgLoader(),
     ],
