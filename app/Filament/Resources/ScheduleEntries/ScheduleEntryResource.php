@@ -61,7 +61,8 @@ class ScheduleEntryResource extends Resource
                         Textarea::make('description'),
 
                         Select::make('room_id')
-                            ->relationship('room', 'name', modifyQueryUsing: fn(Builder $query, Get $get) => $query->where('project_id', $get('project_id')))
+                            ->relationship('room', 'name', modifyQueryUsing: fn(Builder $query, Get $get) => $query
+                                ->when($get('project_id'), fn(Builder $query, $projectId) => $query->where('project_id', $projectId)))
                             ->required()
                             ->createOptionForm(fn(Schema $schema, Get $get) => $schema->components([
                                 TextInput::make('name')
@@ -104,7 +105,9 @@ class ScheduleEntryResource extends Resource
                             ]))->helperText('Color is used for the background in the timetable.'),
 
                         Select::make('project_id')
-                            ->relationship('project', 'name'),
+                            ->relationship('project', 'name')
+                            ->default(Project::where('path', config('app.default_project'))->firstOrFail()->id)
+                            ->live(),
 
                         TextInput::make('external_id')
                             ->label('External ID')
@@ -182,8 +185,8 @@ class ScheduleEntryResource extends Resource
                             ->hintAction(Action::make('realizeDelay')
                                 ->label('Realize Delay')
                                 ->requiresConfirmation()
-                                ->visible(function (ScheduleEntry $entry) {
-                                    return $entry->delay > 0;
+                                ->visible(function (?ScheduleEntry $entry) {
+                                    return $entry?->delay > 0;
                                 })
                                 ->action(function (ScheduleEntry $entry, Set $set) {
                                     $delay = CarbonInterval::make($entry->delay, 'minutes');
