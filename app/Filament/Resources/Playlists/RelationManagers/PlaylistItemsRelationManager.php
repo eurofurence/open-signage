@@ -20,6 +20,7 @@ use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\CheckboxColumn;
 use Filament\Tables\Columns\SelectColumn;
@@ -51,7 +52,11 @@ class PlaylistItemsRelationManager extends RelationManager
                         ->label('Page')
                         ->columnSpan(5)
                         ->required()
-                        ->reactive(),
+                        ->reactive()
+                        ->afterStateUpdated(fn (?string $state, Get $get, Set $set) => $set(
+                            'content',
+                            $this->withContentKeys($state ? (int) $state : null, $get('content') ?? []),
+                        )),
 
                     Select::make('layout_id')
                         ->relationship('layout', 'name', fn (Builder $query) => $query->normal())
@@ -73,6 +78,23 @@ class PlaylistItemsRelationManager extends RelationManager
                     ->hidden(fn (Get $get) => ! $this->shouldDisplayPageContent($get('page_id')))
                     ->schema(fn (Get $get) => $this->buildPageContentSchema($get('page_id'))),
             ]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $content
+     * @return array<string, mixed>
+     */
+    private function withContentKeys(?int $pageId, array $content): array
+    {
+        if (! $pageId) {
+            return $content;
+        }
+
+        foreach (Page::find($pageId)?->schema ?? [] as $field) {
+            $content[$field['property']] ??= null;
+        }
+
+        return $content;
     }
 
     private function shouldDisplayPageContent(?int $pageId): bool
