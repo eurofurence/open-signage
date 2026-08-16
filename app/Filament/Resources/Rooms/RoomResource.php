@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Rooms;
 
+use App\Filament\Resources\Rooms\RelationManagers\ScheduleEntriesRelationManager;
 use Filament\Forms\Components\Select;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Schema;
@@ -83,6 +84,7 @@ class RoomResource extends Resource
     public static function getRelations(): array
     {
         return [
+            ScheduleEntriesRelationManager::class,
             ScreensRelationManager::class,
         ];
     }

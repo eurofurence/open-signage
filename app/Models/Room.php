@@ -23,6 +23,11 @@ class Room extends Model
             ->using(RoomScreen::class);
     }
 
+    public function schedule_entries()
+    {
+        return $this->hasMany(ScheduleEntry::class);
+    }
+
     public function project()
     {
         return $this->belongsTo(Project::class);
