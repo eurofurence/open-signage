@@ -3,8 +3,8 @@ pkgs.mkShell {
   buildInputs = with pkgs; [
     nodejs_24
     nodePackages.npm
-    php84
-    php84Packages.composer
+    php85
+    php85Packages.composer
   ];
 
   shellHook = ''

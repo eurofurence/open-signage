@@ -1,8 +1,9 @@
 # syntax=docker/dockerfile:1.7-labs
-FROM php:8.4-alpine as base
+FROM php:8.5-alpine AS base
 WORKDIR /app
 
 ENV COMPOSER_MEMORY_LIMIT=-1
+ENV OCTANE_SERVER=swoole
 ######################################################
 # Step 1 | Install Dependencies
 ######################################################
@@ -25,17 +26,17 @@ COPY .github/docker/php/php.ini $PHP_INI_DIR/conf.d/php.ini
 ######################################################
 # Local Stage
 ######################################################
-FROM base as local
+FROM base AS local
 ######################################################
 # Build Ziggy Package - Vite needs ziggy package available
 ######################################################
-FROM base as vite-vendor-build
+FROM base AS vite-vendor-build
 WORKDIR /app
 RUN COMPOSER_ALLOW_SUPERUSER=1 | composer require tightenco/ziggy:^2 --ignore-platform-reqs
 ######################################################
 # NodeJS Stage
 ######################################################
-FROM node:24-alpine3.21 as vite
+FROM node:26-alpine3.24 AS vite
 WORKDIR /app
 COPY package.json package-lock.json tailwind.config.js vite.config.js postcss.config.js ./
 RUN npm install --force
@@ -46,7 +47,7 @@ RUN npm run build
 ######################################################
 # Production Stage
 ######################################################
-FROM base as production
+FROM base AS production
 COPY --chown=www-data:www-data composer.json composer.lock /app/
 RUN composer install --no-dev --optimize-autoloader --no-cache --no-scripts
 COPY --chown=www-data:www-data . /app/

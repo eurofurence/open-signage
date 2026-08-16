@@ -8,6 +8,8 @@ storage/framework/sessions/*
 storage/framework/views/*
 storage/logs/*
 vendor
+public/build
+public/hot
 **/*node_modules
 .idea
 **.git

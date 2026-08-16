@@ -28,7 +28,7 @@ Feel free to drop me a message at me@thiritin.com for commercial support.
 
 ## Prerequisites
 
-- PHP 8.1 or higher
+- PHP 8.5 or higher
 - Node.js & npm/yarn
 - Composer
 - Laravel
