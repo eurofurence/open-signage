@@ -1,0 +1,141 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Display face. Single weight, so claim the whole range to stop faux-bolding. */
+@font-face {
+  font-family: "headingThemeFont";
+  font-style: normal;
+  font-weight: 100 900;
+  src:
+    local("Octosale"),
+    url(./Assets/fonts/OCTOSALE-LV114.OTF) format("opentype");
+}
+
+/* Body face, one @font-face per shipped weight. */
+@font-face {
+  font-family: "primaryThemeFont";
+  font-style: normal;
+  font-weight: 300;
+  src:
+    local("DINNextRoundedLTPro-Light"),
+    url(./Assets/fonts/DIN-NEXT-ROUNDED-LT-PRO-LIGHT.TTF) format("truetype");
+}
+
+@font-face {
+  font-family: "primaryThemeFont";
+  font-style: normal;
+  font-weight: 400;
+  src:
+    local("DINNextRoundedLTPro-Regular"),
+    url(./Assets/fonts/DIN-NEXT-ROUNDED-LT-PRO-REGULAR.TTF) format("truetype");
+}
+
+@font-face {
+  font-family: "primaryThemeFont";
+  font-style: normal;
+  font-weight: 500;
+  src:
+    local("DINNextRoundedLTPro-Medium"),
+    url(./Assets/fonts/DIN-NEXT-ROUNDED-LT-PRO-MEDIUM.TTF) format("truetype");
+}
+
+@font-face {
+  font-family: "primaryThemeFont";
+  font-style: normal;
+  font-weight: 700;
+  src:
+    local("DINNextRoundedLTPro-Bold"),
+    url(./Assets/fonts/DIN-NEXT-ROUNDED-LT-PRO-BOLD.TTF) format("truetype");
+}
+
+.themeFont {
+  font-family: "headingThemeFont", "primaryThemeFont", sans-serif;
+  line-height: 1.2;
+}
+
+.themeFontSecondary {
+  font-family:
+    "primaryThemeFont",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    "Helvetica Neue",
+    Arial,
+    "Noto Sans",
+    sans-serif;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.headingFont {
+  font-family: "headingThemeFont", "primaryThemeFont", sans-serif;
+  line-height: 1.2;
+}
+
+.subtext {
+  color: white;
+}
+
+.space_text {
+  color: #f8d032;
+}
+
+.schedule_entry {
+  color: white !important;
+  background: #1c3364;
+  clip-path: polygon(75px 0%, 100% 0, 100% 100%, 0% 100%);
+  height: 220px;
+  max-width: 1100px;
+}
+
+.schedule_entry_back {
+  color: white !important;
+  background: #1c3364;
+  clip-path: polygon(0 1%, 85% 0, 100% 100%, 0% 100%);
+  height: 220px;
+  flex: 0 0 auto;
+  margin-left: 2rem;
+  justify-content: center;
+  width: 600px;
+}
+
+.schedule_title {
+  font-size: 68px;
+}
+
+/* Full-bleed decorative frame drawn by the layouts, above the page content. */
+.background_foreground {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+}
+
+.animation > div {
+  position: absolute;
+  width: 1670px;
+  left: 2500px;
+}
+
+.animation > div:first-child {
+  transition: 1.5s;
+  top: 20px !important;
+}
+
+.animation > div:nth-child(2) {
+  transition: 1.75s;
+  top: 290px;
+}
+
+.animation > div:last-child {
+  transition: 2s;
+  top: 600px;
+}
+
+.animation-done {
+  left: 190px !important;
+}

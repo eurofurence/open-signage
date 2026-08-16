@@ -12,6 +12,7 @@
 ![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/thiritin/open-signage)
 ![GitHub repo size](https://img.shields.io/github/repo-size/thiritin/open-signage)
 ![GitHub All Releases](https://img.shields.io/github/downloads/thiritin/open-signage/total)
+
 # Open Signage
 
 Open Signage is a digital signage solution built on Laravel, Inertia.js, and Vue.js. This platform serves webpages for digital signage screens, running on Chrome in kiosk mode. Utilizing Socketi, Open Signage dynamically updates data on screens. Users can create playlists for their screens, allowing for rotating announcements and various media presentations.
@@ -86,7 +87,7 @@ php artisan migrate
 ./vendor/bin/sail up
 ```
 
-Or use 
+Or use
 
 2. Start vite dev mode:
 

@@ -20,3 +20,6 @@ yarn-error.log
 
 # Sentry Auth Token
 .env.sentry-build-plugin
+
+# Mac is a pancake
+.DS_Store
