@@ -90,7 +90,9 @@
   background: #393b7ea9;
   border-radius: 96px 0 0 96px;
   height: 220px;
-  max-width: 1300px;
+  flex: 1 1 0%;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .schedule_entry_back {
@@ -137,5 +139,5 @@
 }
 
 .animation-done {
-  left: 190px !important;
+  left: 110px !important;
 }

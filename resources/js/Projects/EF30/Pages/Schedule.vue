@@ -188,7 +188,7 @@ function onLeave(node, done) {
     >
       <div
         :key="currentPageIndex"
-        class="animation flex absolute z-30 mt-28 h-[100vh] w-[100vw] p-12 px-38 space-y-8 justify-center overflow-hidden"
+        class="animation flex absolute z-30 mt-28 h-[100vh] w-[100vw] space-y-8 justify-center overflow-hidden"
       >
         <!--                <TransitionGroup name="list">-->
         <div
@@ -197,7 +197,7 @@ function onLeave(node, done) {
           class="flex flex-row space_text items-start items-baseline"
           :class="[isThemeFont ? 'theme-font' : 'theme-font-secondary']"
         >
-          <div class="relative flex flex-col flex-auto schedule_entry justify-center pl-10 pr-2">
+          <div class="relative flex flex-col schedule_entry justify-center pl-10 pr-2">
             <div v-fit-title class="relative flex flex-row flex-nowrap heading-font schedule_title">
               <span class="schedule_title_text">{{ item.title }}</span>
             </div>
@@ -205,7 +205,7 @@ function onLeave(node, done) {
               {{ item.room.name }}
             </div>
           </div>
-          <div class="relative flex flex-col flex-auto text-center items-center schedule_entry_back pt-7">
+          <div class="relative flex flex-col text-center items-center schedule_entry_back pt-7">
             <div class="relative flex flex-row text-justify items-start">
               <div class="relative flex flex-row flex-shrink-0 flex-nowrap items-baseline text-justify text-6xl">
                 <div class="flex flex-row flex-nowrap text-justify align-top">
@@ -218,7 +218,7 @@ function onLeave(node, done) {
               </div>
             </div>
             <div class="relative flex flex-row flex-nowrap">
-              <div v-if="item.delay" class="flex flex-row items-baseline text-4xl">
+              <div v-if="item.delay" class="relative flex flex-row flex-nowrap text-justify align-top text-[2vw] subtext">
                 <div v-if="item.delay < 15" class="flex text-left" style="color: #f8d032 !important">
                   Slightly Delayed
                 </div>
