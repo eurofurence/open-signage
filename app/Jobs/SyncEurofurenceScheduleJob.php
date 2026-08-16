@@ -32,6 +32,14 @@ class SyncEurofurenceScheduleJob implements ShouldQueue
 
         $project = Project::where('path', config('app.default_project'))->firstOrFail();
 
+        $schedule['days'] = array_map(function ($day) {
+            $day['slots'] = array_values(array_filter($day['slots'], fn($slot) => filled($slot['room']['id'] ?? null)
+                && filled($slot['start'] ?? null)
+                && filled($slot['end'] ?? null)));
+
+            return $day;
+        }, $schedule['days']);
+
         $scheduleRooms = array_values(array_reduce($schedule['days'], function ($carry, $day) use ($project) {
             $scheduleRooms = array_map(function ($slot) use ($project) {
                 return [
@@ -56,13 +64,15 @@ class SyncEurofurenceScheduleJob implements ShouldQueue
                 $slot["end"] = new Carbon($slot["end"]);
                 $slot["delay"] = 0;
 
+                $externalId = $slot['code'] . '-' . $slot['start']->toDateString();
+
                 $room = Room::where('project_id', $project->id)
                     ->where('external_id', $slot['room']['id'])
                     ->firstOrFail();
 
                 if (config('app.enable_delay_detection')) {
                     $currentEntry = ScheduleEntry::where('project_id', $project->id)
-                        ->where('external_id', $slot['id'])
+                        ->where('external_id', $externalId)
                         ->first();
 
                     if ($currentEntry) {
@@ -81,7 +91,7 @@ class SyncEurofurenceScheduleJob implements ShouldQueue
 
                 return [
                     'project_id' => $project->id,
-                    'external_id' => $slot['code'],
+                    'external_id' => $externalId,
                     'room_id' => $room->id,
                     'title' => $slot['title'],
                     'description' => $slot['description'],

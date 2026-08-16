@@ -18,6 +18,10 @@ const props = defineProps({
     type: Number,
     default: 15000,
   },
+  lookaheadHours: {
+    type: Number,
+    default: 12,
+  },
   isThemeFont: {
     type: Boolean,
     default: true,
@@ -27,11 +31,13 @@ const props = defineProps({
 const currentTime = ref(DateTime.now());
 const currentPageIndex = ref(0);
 
+const lookaheadHours = computed(() => Number(props.lookaheadHours) || 12);
+
 const filteredEvents = computed(() => {
   return _.cloneDeep(props.schedule)
     .filter(event => {
       return (
-        currentTime.value > DateTime.fromISO(event.starts_at).minus({ hours: 12 }) &&
+        currentTime.value > DateTime.fromISO(event.starts_at).minus({ hours: lookaheadHours.value }) &&
         currentTime.value <= DateTime.fromISO(event.ends_at).plus({ minutes: event.delay }).plus({ minutes: 10 }) &&
         !event.title.toLowerCase().includes('seating')
       );

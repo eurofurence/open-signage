@@ -82,6 +82,11 @@ class EurofurenceSeeder extends Seeder
                     "type" => "TextInput"
                 ],
                 [
+                    "name" => "Lookahead (hours)",
+                    "property" => "lookaheadHours",
+                    "type" => "TextInput"
+                ],
+                [
                     "name" => "Use Theme Font",
                     "property" => "isThemeFont",
                     "type" => "Checkbox"
