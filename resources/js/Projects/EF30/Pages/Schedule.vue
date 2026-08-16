@@ -69,7 +69,7 @@ const filteredEvents = computed(() => {
         }
       }
 
-      event.title = truncate(event.title, 24, true);
+      event.title = truncate(event.title, 32, true);
 
       return event;
     });
@@ -96,6 +96,50 @@ onMounted(() => {
     clearInterval(pageSwitcher);
   });
 });
+
+const TITLE_MIN_FONT_SIZE = 32;
+const titleMaxSizes = new WeakMap();
+
+function fitTitle(el) {
+  const text = el.firstElementChild;
+  if (!text) return;
+
+  let max = titleMaxSizes.get(el);
+  if (!max) {
+    max = parseFloat(window.getComputedStyle(el).fontSize) || TITLE_MIN_FONT_SIZE;
+    titleMaxSizes.set(el, max);
+  }
+
+  const setSize = size => el.style.setProperty('font-size', `${size}px`, 'important');
+
+  setSize(max);
+
+  const available = el.clientWidth;
+  if (!available) return;
+
+  const natural = text.getBoundingClientRect().width;
+  if (natural <= available) return;
+
+  let size = Math.max(TITLE_MIN_FONT_SIZE, Math.floor((max * available) / natural));
+  setSize(size);
+
+  while (size > TITLE_MIN_FONT_SIZE && text.getBoundingClientRect().width > available) {
+    size -= 1;
+    setSize(size);
+  }
+}
+
+const vFitTitle = {
+  mounted(el) {
+    fitTitle(el);
+    if (document.fonts) {
+      document.fonts.ready.then(() => fitTitle(el));
+    }
+  },
+  updated(el) {
+    fitTitle(el);
+  },
+};
 
 function onBeforeEnter() {
   //spanify(el);
@@ -153,18 +197,15 @@ function onLeave(node, done) {
           class="flex flex-row space_text items-start items-baseline"
           :class="[isThemeFont ? 'theme-font' : 'theme-font-secondary']"
         >
-          <div class="relative flex flex-col flex-auto schedule_entry pl-32 pr-16 pt-8">
-            <div class="relative flex flex-row flex-nowrap text-center align-top heading-font text-6xl schedule_title">
-              {{ item.title }}
+          <div class="relative flex flex-col flex-auto schedule_entry justify-center pl-10 pr-2">
+            <div v-fit-title class="relative flex flex-row flex-nowrap heading-font schedule_title">
+              <span class="schedule_title_text">{{ item.title }}</span>
             </div>
-            <div class="relative flex flex-row flex-nowrap text-justify align-top text-4xl subtext">
+            <div class="relative flex flex-row flex-nowrap text-justify text-5xl subtext">
               {{ item.room.name }}
             </div>
           </div>
-          <div
-            class="relative flex flex-col flex-auto text-center items-center schedule_entry_back p-10"
-            style="top: 10px"
-          >
+          <div class="relative flex flex-col flex-auto text-center items-center schedule_entry_back pt-7">
             <div class="relative flex flex-row text-justify items-start">
               <div class="relative flex flex-row flex-shrink-0 flex-nowrap items-baseline text-justify text-6xl">
                 <div class="flex flex-row flex-nowrap text-justify align-top">

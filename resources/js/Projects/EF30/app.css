@@ -73,6 +73,7 @@
 
 .heading-font {
   font-family: "headingThemeFont", "primaryThemeFont", sans-serif;
+  font-size: 4.5rem !important;
   line-height: 1.2;
 }
 
@@ -86,25 +87,32 @@
 
 .schedule_entry {
   color: white !important;
-  background: #1c3364;
-  clip-path: polygon(75px 0%, 100% 0, 100% 100%, 0% 100%);
+  background: #393b7ea9;
+  border-radius: 96px 0 0 96px;
   height: 220px;
-  max-width: 1100px;
+  max-width: 1300px;
 }
 
 .schedule_entry_back {
   color: white !important;
-  background: #1c3364;
-  clip-path: polygon(0 1%, 85% 0, 100% 100%, 0% 100%);
+  background: #393b7ea9;
+  border-radius: 0 96px 96px 0;
   height: 220px;
   flex: 0 0 auto;
   margin-left: 2rem;
   justify-content: center;
-  width: 600px;
+  width: 400px;
 }
 
 .schedule_title {
   font-size: 68px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.schedule_title_text {
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
 
 .animation > div {
