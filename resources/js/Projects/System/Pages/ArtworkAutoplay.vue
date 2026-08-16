@@ -22,16 +22,28 @@ const props = defineProps({
 });
 
 const state = useAppState();
-const isScreenHorizontal = props.appScreen.orientation === 'normal' || props.appScreen.orientation === 'inverted';
-const screenOrientation = ref(isScreenHorizontal ? 'horizontal' : 'vertical');
+const portraitOrientations = ['left', 'right'];
+
+const orientationFromDisplay = () => {
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+
+  if (!width || !height || width === height) return null;
+
+  return height > width ? 'vertical' : 'horizontal';
+};
+
+const orientationFromScreenRecord = () => {
+  return portraitOrientations.includes(props.appScreen.orientation) ? 'vertical' : 'horizontal';
+};
+
+const resolveOrientation = () => orientationFromDisplay() ?? orientationFromScreenRecord();
+
+const screenOrientation = ref(resolveOrientation());
 const carousel = ref(null);
 
 const handleOrientationChange = () => {
-  if (screen.orientation.angle === 90) {
-    screenOrientation.value = 'vertical';
-  } else {
-    screenOrientation.value = 'horizontal';
-  }
+  screenOrientation.value = resolveOrientation();
 };
 
 const stopCarousel = instance => {
@@ -46,16 +58,18 @@ watch(carousel, (current, previous) => {
 
 onMounted(() => {
   window.addEventListener('orientationchange', handleOrientationChange);
+  window.addEventListener('resize', handleOrientationChange);
 });
 
 onBeforeUnmount(() => {
   window.removeEventListener('orientationchange', handleOrientationChange);
+  window.removeEventListener('resize', handleOrientationChange);
   stopCarousel(carousel.value);
 });
 
 const artworksFilteredWithoutMissingOrientation = computed(() => {
   const filteredArt = state.artworks.filter(artwork => {
-    return artwork[screenOrientation.value] !== null;
+    return Boolean(artwork[screenOrientation.value]);
   });
   // Randomize the order of the artworks
   return filteredArt.sort(() => Math.random() - 0.5);
@@ -63,13 +77,14 @@ const artworksFilteredWithoutMissingOrientation = computed(() => {
 </script>
 
 <template>
-  <div class="h-screen">
+  <div class="h-screen w-full overflow-hidden">
     <Hooper
       v-if="artworksFilteredWithoutMissingOrientation.length > 0"
       ref="carousel"
       :mouse-drag="false"
       :hover-pause="false"
       :keys-control="false"
+      :rtl="false"
       class="h-screen w-full"
       :transition="transition"
       :wheel-control="false"
