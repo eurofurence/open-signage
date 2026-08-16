@@ -19,7 +19,7 @@ const props = defineProps({
     default: 15000,
   },
   lookaheadHours: {
-    type: Number,
+    type: [Number, String],
     default: 12,
   },
   isThemeFont: {
