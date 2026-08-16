@@ -2,7 +2,6 @@
 import { ref, computed, onMounted, onUnmounted, toRaw } from 'vue';
 import None from '@/Projects/System/Layouts/None.vue';
 import Error from '@/Projects/System/Pages/Error.vue';
-import moment from 'moment';
 import { useAppState } from '@/state.js';
 import { synced } from '@/synced.js';
 
@@ -184,9 +183,9 @@ const rooms = computed(() => {
   return appScreen.value.rooms.filter(room => {
     return (
       // If room.pivot.starts_at exists, check if the current time is greater than or equal to it
-      (!room.pivot.starts_at || state.currentTime.isSameOrAfter(moment(room.pivot.starts_at))) &&
+      (!room.pivot.starts_at || state.currentTime >= new Date(room.pivot.starts_at).getTime()) &&
       // If room.pivot.ends_at exists, check if the current time is less than or equal to it
-      (!room.pivot.ends_at || state.currentTime.isSameOrBefore(moment(room.pivot.ends_at)))
+      (!room.pivot.ends_at || state.currentTime <= new Date(room.pivot.ends_at).getTime())
     );
   });
 });
