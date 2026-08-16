@@ -50,7 +50,7 @@ export default {
     },
   },
   methods: {
-    constructor (mediaDataSource, config) {
+    constructor(mediaDataSource, config) {
       this.flvPlayer.constructor(mediaDataSource, config);
     },
     init() {

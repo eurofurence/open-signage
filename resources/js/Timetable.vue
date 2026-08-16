@@ -2,19 +2,7 @@
 import 'vue3-carousel/dist/carousel.css';
 import { Carousel, Slide } from 'vue3-carousel';
 import HourTime from '@/Components/HourTime.vue';
-import { computed, onMounted, onUnmounted, ref, unref } from 'vue';
-import { DateTime } from 'luxon';
-
-const cleanUpPrevention = [
-  'grid-cols-1',
-  'grid-cols-2',
-  'grid-cols-3',
-  'grid-cols-4',
-  'grid-cols-5',
-  'grid-cols-6',
-  'grid-cols-7',
-  'grid-cols-8',
-];
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 
 const props = defineProps({
   initialSchedule: {
@@ -38,22 +26,14 @@ const props = defineProps({
 });
 
 const schedule = ref(props.initialSchedule);
-const currentTime = ref(new Date());
 
-Echo.channel('ScreenAll').listen('.schedule.update', e => {
+window.Echo.channel('ScreenAll').listen('.schedule.update', e => {
   schedule.value = e.schedule;
 });
 
 const groupedSchedule = computed(() => {
   // Group by date
   return schedule.value
-    .filter(entry => {
-      const now = currentTime.value;
-      const start = new Date(entry.starts_at);
-      const end = new Date(new Date(entry.ends_at).getTime() + entry.delay * 1000 * 60);
-
-      return true;
-    })
     .filter(entry => {
       if (props.showDate) {
         return new Date(entry.starts_at).getDate() === new Date(props.showDate).getDate();
@@ -70,23 +50,10 @@ const groupedSchedule = computed(() => {
     }, {});
 });
 
-let count = 0;
-for (const schedule in groupedSchedule.value) {
-  count += 1;
-}
+const count = Object.keys(groupedSchedule.value).length;
 
-function eventHeight(startTime, endTime) {
+function eventHeight() {
   return 0;
-  let timeDifference = new Date(endTime).getTime() - new Date(startTime).getTime();
-  timeDifference /= (1000 * 60);
-  if (timeDifference < 60) {
-    timeDifference = 60;
-  }
-  return timeDifference;
-}
-
-function toMinutes(date) {
-  return date.getHours() * 60 + date.getMinutes();
 }
 
 const showItemsBasedOnScreenSize = computed(() => {
@@ -140,7 +107,7 @@ function isCurrentTimeBetween(startTime, endTime, delay) {
 
 function entryInPast(entry) {
   const now = new Date();
-  const endTimeCompare = new Date(new Date(entry.ends_at).getTime() + (entry.delay * 60 * 1000 ?? 0));
+  const endTimeCompare = new Date(new Date(entry.ends_at).getTime() + (entry.delay ?? 0) * 60 * 1000);
   return now.getTime() >= endTimeCompare.getTime();
 }
 </script>
@@ -180,12 +147,7 @@ function entryInPast(entry) {
             <div class="px-2 pb-4 w-full" v-for="(panel, panelIndex) in day">
               <div
                 :style="
-                  'min-height:' +
-                  eventHeight(panel.starts_at, panel.ends_at) +
-                  'px;' +
-                  'background:' +
-                  panel.schedule_type?.color +
-                  '!important;'
+                  'min-height:' + eventHeight() + 'px;' + 'background:' + panel.schedule_type?.color + '!important;'
                 "
                 class="bg-primary-100 rounded"
               >

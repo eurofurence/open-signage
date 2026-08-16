@@ -40,6 +40,8 @@ export default defineConfig(
     languageOptions: {
       globals: {
         ...globals.browser,
+        Ziggy: 'readonly',
+        route: 'readonly',
       },
     },
     rules: {
@@ -49,6 +51,7 @@ export default defineConfig(
       camelcase: [
         2,
         {
+          properties: 'never',
           allow: [],
         },
       ],
@@ -193,6 +196,17 @@ export default defineConfig(
       'valid-typeof': 2,
       'vars-on-top': 2,
       yoda: [2, 'never'],
+    },
+  },
+
+  {
+    name: 'SignageThemeConfig',
+    files: ['resources/js/Projects/*/theme.js'],
+    languageOptions: {
+      sourceType: 'commonjs',
+      globals: {
+        ...globals.node,
+      },
     },
   },
 );

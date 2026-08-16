@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, useAttrs } from 'vue';
+import { useAttrs } from 'vue';
 
 const props = defineProps(['page']);
 defineOptions({

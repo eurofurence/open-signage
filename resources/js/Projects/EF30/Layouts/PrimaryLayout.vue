@@ -1,5 +1,5 @@
 <script setup>
-const props = defineProps(['page']);
+defineProps(['page']);
 
 defineOptions({
   inheritAttrs: false,

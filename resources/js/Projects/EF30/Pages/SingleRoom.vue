@@ -3,6 +3,7 @@ import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { DateTime } from 'luxon';
 import HourTime from '@/Components/HourTime.vue';
 import _ from 'lodash';
+import truncate from '@/truncate.js';
 
 const props = defineProps({
   appScreen: {
@@ -30,9 +31,9 @@ onMounted(() => {
   });
 });
 
-function getDayDescription(starts_at) {
+function getDayDescription(startsAt) {
   // Parse the starts_at date string into a Luxon DateTime object
-  const eventDate = DateTime.fromISO(starts_at).startOf('day');
+  const eventDate = DateTime.fromISO(startsAt).startOf('day');
 
   // Get the current date and set it to the start of the day (00:00:00)
   const currentDate = DateTime.local().startOf('day');
@@ -45,9 +46,8 @@ function getDayDescription(starts_at) {
     return null; // Return nothing if the date is today
   } else if (diffInDays === 1) {
     return 'Tomorrow'; // Return "Tomorrow" if the date is tomorrow
-  } 
-    return eventDate.toFormat('EEEE'); // Return the weekday name for any other date
-  
+  }
+  return eventDate.toFormat('EEEE'); // Return the weekday name for any other date
 }
 
 const nextEvent = computed(() => {
@@ -74,7 +74,7 @@ const nextEvent = computed(() => {
         {{ nextEvent.room.name }}
       </div>
       <div class="text-[6vw] leading-[1.2] font-bold text-center neonTextColor">
-        {{ nextEvent.title.truncate(90) }}
+        {{ truncate(nextEvent.title, 90) }}
       </div>
       <div class="mb-2 whitespace-nowrap text-5xl text-center text-[9vw] leading-none">
         <div

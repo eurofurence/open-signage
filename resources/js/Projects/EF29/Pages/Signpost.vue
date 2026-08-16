@@ -1,5 +1,10 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { DateTime } from 'luxon';
+import { cloneDeep } from 'lodash';
+import IconRouter from '@/Projects/System/Components/IconRouter.vue';
+import chunkArray from '@/chunkArray.js';
+import truncate from '@/truncate.js';
 
 const props = defineProps({
   title: {
@@ -31,19 +36,6 @@ const props = defineProps({
 const currentTime = ref(DateTime.now());
 const currentPageIndex = ref(0);
 
-onMounted(() => {
-  const interval = setInterval(() => {
-    currentTime.value = DateTime.now();
-  }, 5000);
-  const pageSwitcher = setInterval(() => {
-    currentPageIndex.value = (currentPageIndex.value + 1) % signPostPages.value.length;
-  }, props.pageSwitchingTimer);
-  onUnmounted(() => {
-    clearInterval(interval);
-    clearInterval(pageSwitcher);
-  });
-});
-
 const nextEvent = function (room) {
   return computed(() => {
     return cloneDeep(props.schedule)
@@ -74,10 +66,18 @@ const currentSignPostPage = computed(() => {
   return signPostPages.value[currentPageIndex.value];
 });
 
-import IconRouter from '@/Projects/System/Components/IconRouter.vue';
-import { DateTime } from 'luxon';
-import { cloneDeep } from 'lodash';
-import chunkArray from '@/chunkArray.js';
+onMounted(() => {
+  const interval = setInterval(() => {
+    currentTime.value = DateTime.now();
+  }, 5000);
+  const pageSwitcher = setInterval(() => {
+    currentPageIndex.value = (currentPageIndex.value + 1) % signPostPages.value.length;
+  }, props.pageSwitchingTimer);
+  onUnmounted(() => {
+    clearInterval(interval);
+    clearInterval(pageSwitcher);
+  });
+});
 </script>
 
 <template>
@@ -124,7 +124,7 @@ import chunkArray from '@/chunkArray.js';
               <div>
                 <div>
                   <div class="leading-none" v-if="nextEvent(item).value.title.split(' – ')[0]">
-                    {{ nextEvent(item).value.title.split(' – ')[0].truncate(30) }}
+                    {{ truncate(nextEvent(item).value.title.split(' – ')[0], 30) }}
                   </div>
                   <div
                     :class="{
@@ -133,7 +133,7 @@ import chunkArray from '@/chunkArray.js';
                     class="text-[3vw] leading-none"
                     v-if="nextEvent(item).value.title.split(' – ')[1]"
                   >
-                    {{ nextEvent(item).value.title.split(' – ')[1].truncate(45) }}
+                    {{ truncate(nextEvent(item).value.title.split(' – ')[1], 45) }}
                   </div>
                 </div>
               </div>

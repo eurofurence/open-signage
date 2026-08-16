@@ -1,19 +1,7 @@
 <script setup>
-import { computed, onMounted, reactive, useAttrs } from 'vue';
-
-const props = defineProps(['page']);
+defineProps(['page']);
 defineOptions({
   inheritAttrs: false,
-});
-
-const attrs = reactive(useAttrs());
-
-const usableAttributes = computed(() => {
-  return {
-    ...attrs,
-    page: props.page,
-    ...props.page.props,
-  };
 });
 </script>
 

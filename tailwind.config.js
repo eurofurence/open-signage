@@ -1,4 +1,3 @@
-import colors from 'tailwindcss/colors';
 import 'dotenv/config';
 
 const projectPath = process.env.VITE_PROJECT_PATH ?? 'EF30';
@@ -13,6 +12,7 @@ export default {
     './resources/views/**/*.blade.php',
     './resources/js/**/*.vue',
   ],
+  safelist: [{ pattern: /^grid-cols-[1-8]$/ }, { pattern: /^text-(?:[3-9]|1[0-4])xl$/ }],
   theme: {
     extend: {
       ...theme,

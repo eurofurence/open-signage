@@ -1,6 +1,6 @@
 import { computed, onMounted, onUnmounted, ref, toRaw } from 'vue';
 
-export const synced = (arrayOrLength, interval, transform, opts) => {
+export const synced = (arrayOrLength, interval, transform) => {
   let intervalHandle = null;
   const selected = ref(null);
   const length = computed(() => (Array.isArray(arrayOrLength) ? arrayOrLength.length : arrayOrLength));

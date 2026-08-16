@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, onUpdated, reactive, useAttrs, watch } from 'vue';
+import { computed, onMounted, reactive, useAttrs } from 'vue';
 
 const props = defineProps(['page']);
 defineOptions({

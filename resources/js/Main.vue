@@ -3,8 +3,7 @@ import { defineAsyncComponent, ref, computed, onMounted, onUnmounted, toRaw } fr
 import None from '@/Projects/System/Layouts/None.vue';
 import Error from '@/Projects/System/Pages/Error.vue';
 import moment from 'moment';
-import _ from 'lodash';
-import { initAppState, useAppState } from '@/state.js';
+import { useAppState } from '@/state.js';
 import { synced } from '@/synced.js';
 
 const props = defineProps({
@@ -32,9 +31,7 @@ const props = defineProps({
 });
 
 const state = useAppState();
-const schedule = ref(props.initialSchedule);
 const appScreen = ref(props.initialScreen);
-const artworks = ref(props.initialArtworks);
 
 const ping = () => {
   window.axios
@@ -65,7 +62,7 @@ onMounted(() => {
   onUnmounted(() => clearInterval(pingInterval));
 });
 
-Echo.channel('ScreenAll')
+window.Echo.channel('ScreenAll')
   .listen('.announcement.create', announcement => {
     state.announcements.push(announcement);
     state.version++;
@@ -125,8 +122,8 @@ Echo.channel('ScreenAll')
     state.version++;
   });
 
-Echo.channel(`Screen.${  props.initialScreen.id}`)
-  .listen('.screen.refresh', e => {
+window.Echo.channel(`Screen.${props.initialScreen.id}`)
+  .listen('.screen.refresh', () => {
     window.location.reload();
   })
   .listen('.playlist.switch', playlist => {
@@ -160,16 +157,16 @@ Echo.channel(`Screen.${  props.initialScreen.id}`)
     state.version++;
   });
 
-window.Echo.connector.pusher.connection.bind('connecting', payload => {
+window.Echo.connector.pusher.connection.bind('connecting', () => {
   state.isConnected = false;
   state.connectionError = 'Socket reconnecting';
 });
 
-window.Echo.connector.pusher.connection.bind('connected', payload => {
+window.Echo.connector.pusher.connection.bind('connected', () => {
   state.isConnected = true;
 });
 
-window.Echo.connector.pusher.connection.bind('unavailable', payload => {
+window.Echo.connector.pusher.connection.bind('unavailable', () => {
   state.isConnected = false;
   state.connectionError = 'Socket failed';
 });
@@ -195,27 +192,27 @@ const rooms = computed(() => {
 });
 
 const cycleLength = computed(() =>
-  activePlaylistItems.value.reduce((acc, item) => acc + parseInt(item.duration) * 1000, 0),
+  activePlaylistItems.value.reduce((acc, item) => acc + parseInt(item.duration, 10) * 1000, 0),
 );
 
 let updatePlaylistItemTimeout = null;
 const currentPlaylistItem = ref(null);
 
-const updatePlaylistItem = () => {
+function updatePlaylistItem() {
   const now = Date.now();
   let period = Math.round(now) % cycleLength.value;
   let index = -1;
 
   while (period >= 0) {
     index++;
-    period -= parseInt(activePlaylistItems.value[index].duration) * 1000;
+    period -= parseInt(activePlaylistItems.value[index].duration, 10) * 1000;
   }
 
   if (index < 0) index = 0;
   currentPlaylistItem.value = activePlaylistItems.value[index];
-  const rest = now - Date.now() + parseInt(activePlaylistItems.value[index].duration) * 1000;
+  const rest = now - Date.now() + parseInt(activePlaylistItems.value[index].duration, 10) * 1000;
   updatePlaylistItemTimeout = setTimeout(updatePlaylistItem, rest < 1000 ? 1000 : rest);
-};
+}
 
 onMounted(() => {
   updatePlaylistItem();

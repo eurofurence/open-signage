@@ -1,7 +1,8 @@
 <script setup>
-import { computed, defineAsyncComponent, onMounted, onUnmounted, ref, toRaw, unref } from 'vue';
+import { computed, onMounted, onUnmounted, ref, toRaw } from 'vue';
 import { DateTime } from 'luxon';
 import _ from 'lodash';
+import truncate from '@/truncate.js';
 
 const props = defineProps({
   title: {
@@ -32,29 +33,6 @@ const props = defineProps({
 
 const currentTime = ref(DateTime.now());
 const currentPageIndex = ref(0);
-
-onMounted(() => {
-  const interval = setInterval(() => {
-    currentTime.value = DateTime.now();
-  }, 5000);
-  const pageSwitcher = setInterval(() => {
-    currentPageIndex.value = (currentPageIndex.value + 1) % roomPages.value.length;
-  }, props.pageSwitchingTimer);
-  onUnmounted(() => {
-    clearInterval(interval);
-    clearInterval(pageSwitcher);
-  });
-});
-
-String.prototype.truncate =
-  String.prototype.truncate ||
-  function (n, useWordBoundary) {
-    if (this.length <= n) {
-      return this;
-    }
-    const subString = this.slice(0, n - 1); // the original check
-    return `${useWordBoundary ? subString.slice(0, subString.lastIndexOf(' ')) : subString  } …`;
-  };
 
 function getNextEventForRoom(room, timeObject) {
   console.log(props.schedule);
@@ -89,7 +67,7 @@ function getNextEventForRoom(room, timeObject) {
             .replace('The Electric Lounge Sessions', '')
             .replace(/^[\W]+/g, '')
         : eventCopy.title;
-      eventCopy.title = eventCopy.title.split(' – ')[0].truncate(30, true);
+      eventCopy.title = truncate(eventCopy.title.split(' – ')[0], 30, true);
       return eventCopy; //event.title.replace(room.name);
     })
     .shift();
@@ -118,6 +96,19 @@ const roomPages = computed(() => {
 
 const currentSlide = computed(() => {
   return roomPages.value[currentPageIndex.value];
+});
+
+onMounted(() => {
+  const interval = setInterval(() => {
+    currentTime.value = DateTime.now();
+  }, 5000);
+  const pageSwitcher = setInterval(() => {
+    currentPageIndex.value = (currentPageIndex.value + 1) % roomPages.value.length;
+  }, props.pageSwitchingTimer);
+  onUnmounted(() => {
+    clearInterval(interval);
+    clearInterval(pageSwitcher);
+  });
 });
 
 function onEnter(node, done) {

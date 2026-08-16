@@ -1,7 +1,7 @@
 <script setup>
 import VueFlvPlayer from '@/Projects/System/Components/VueFlvPlayer.vue';
 
-const props = defineProps({
+defineProps({
   streamUrl: String,
   muted: Boolean,
 });

@@ -28,11 +28,6 @@ screen.orientation.onchange = () => {
 const state = useAppState();
 const screenOrientation = ref('vertical');
 
-onMounted(() => {
-  setScreenOrientation();
-  window.addEventListener('orientationchange', handleOrientationChange);
-});
-
 const setScreenOrientation = () => {
   if (props.appScreen.orientation === 'normal' || props.appScreen.orientation === 'inverted') {
     screenOrientation.value = 'horizontal';
@@ -46,6 +41,11 @@ const handleOrientationChange = () => {
     screenOrientation.value = 'horizontal';
   }
 };
+
+onMounted(() => {
+  setScreenOrientation();
+  window.addEventListener('orientationchange', handleOrientationChange);
+});
 
 const artworksFilteredWithoutMissingOrientation = computed(() => {
   const filteredArt = state.artworks.filter(artwork => {

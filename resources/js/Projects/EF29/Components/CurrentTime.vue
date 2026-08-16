@@ -12,7 +12,7 @@ const m11 = ref();
 
 let time = getTime();
 
-const props = defineProps({
+defineProps({
   hourglass: {
     type: Boolean,
     default: false,
@@ -28,88 +28,88 @@ onMounted(() => {
   const timer = setInterval(() => {
     const newTime = getTime();
     if (time.minutes[1] !== newTime.minutes[1]) {
-      const opacity00 = window.getComputedStyle(m00.value).getPropertyValue('opacity');
-      if (opacity00 == 0) {
+      const opacity00 = Number(window.getComputedStyle(m00.value).getPropertyValue('opacity'));
+      if (opacity00 === 0) {
         m00.value.textContent = newTime.minutes[1];
         m00.value.classList.add('fade-in');
         m00.value.classList.remove('fade-out');
-      } else if (opacity00 == 1) {
+      } else if (opacity00 === 1) {
         m00.value.classList.add('fade-out');
         m00.value.classList.remove('fade-in');
       }
 
-      const opacity01 = window.getComputedStyle(m01.value).getPropertyValue('opacity');
-      if (opacity01 == 0) {
+      const opacity01 = Number(window.getComputedStyle(m01.value).getPropertyValue('opacity'));
+      if (opacity01 === 0) {
         m01.value.textContent = newTime.minutes[1];
         m01.value.classList.add('fade-in');
         m01.value.classList.remove('fade-out');
-      } else if (opacity01 == 1) {
+      } else if (opacity01 === 1) {
         m01.value.classList.add('fade-out');
         m01.value.classList.remove('fade-in');
       }
     }
 
     if (time.minutes[0] !== newTime.minutes[0]) {
-      const opacity10 = window.getComputedStyle(m10.value).getPropertyValue('opacity');
-      if (opacity10 == 0) {
+      const opacity10 = Number(window.getComputedStyle(m10.value).getPropertyValue('opacity'));
+      if (opacity10 === 0) {
         m10.value.textContent = newTime.minutes[0];
         m10.value.classList.add('fade-in');
         m10.value.classList.remove('fade-out');
-      } else if (opacity10 == 1) {
+      } else if (opacity10 === 1) {
         m10.value.classList.add('fade-out');
         m10.value.classList.remove('fade-in');
       }
 
-      const opacity11 = window.getComputedStyle(m11.value).getPropertyValue('opacity');
-      if (opacity11 == 0) {
+      const opacity11 = Number(window.getComputedStyle(m11.value).getPropertyValue('opacity'));
+      if (opacity11 === 0) {
         m11.value.textContent = newTime.minutes[0];
         m11.value.classList.add('fade-in');
         m11.value.classList.remove('fade-out');
-      } else if (opacity11 == 1) {
+      } else if (opacity11 === 1) {
         m11.value.classList.add('fade-out');
         m11.value.classList.remove('fade-in');
       }
     }
 
     if (time.hours[1] !== newTime.hours[1]) {
-      const opacity00 = window.getComputedStyle(h00.value).getPropertyValue('opacity');
-      if (opacity00 == 0) {
+      const opacity00 = Number(window.getComputedStyle(h00.value).getPropertyValue('opacity'));
+      if (opacity00 === 0) {
         h00.value.textContent = newTime.hours[1];
         h00.value.classList.add('fade-in');
         h00.value.classList.remove('fade-out');
-      } else if (opacity00 == 1) {
+      } else if (opacity00 === 1) {
         h00.value.classList.add('fade-out');
         h00.value.classList.remove('fade-in');
       }
 
-      const opacity01 = window.getComputedStyle(h01.value).getPropertyValue('opacity');
-      if (opacity01 == 0) {
+      const opacity01 = Number(window.getComputedStyle(h01.value).getPropertyValue('opacity'));
+      if (opacity01 === 0) {
         h01.value.textContent = newTime.hours[1];
         h01.value.classList.add('fade-in');
         h01.value.classList.remove('fade-out');
-      } else if (opacity01 == 1) {
+      } else if (opacity01 === 1) {
         h01.value.classList.add('fade-out');
         h01.value.classList.remove('fade-in');
       }
     }
 
     if (time.hours[0] !== newTime.hours[0]) {
-      const opacity10 = window.getComputedStyle(h10.value).getPropertyValue('opacity');
-      if (opacity10 == 0) {
+      const opacity10 = Number(window.getComputedStyle(h10.value).getPropertyValue('opacity'));
+      if (opacity10 === 0) {
         h10.value.textContent = newTime.hours[0];
         h10.value.classList.add('fade-in');
         h10.value.classList.remove('fade-out');
-      } else if (opacity10 == 1) {
+      } else if (opacity10 === 1) {
         h10.value.classList.add('fade-out');
         h10.value.classList.remove('fade-in');
       }
 
-      const opacity11 = window.getComputedStyle(h11.value).getPropertyValue('opacity');
-      if (opacity11 == 0) {
+      const opacity11 = Number(window.getComputedStyle(h11.value).getPropertyValue('opacity'));
+      if (opacity11 === 0) {
         h11.value.textContent = newTime.hours[0];
         h11.value.classList.add('fade-in');
         h11.value.classList.remove('fade-out');
-      } else if (opacity11 == 1) {
+      } else if (opacity11 === 1) {
         h11.value.classList.add('fade-out');
         h11.value.classList.remove('fade-in');
       }

@@ -1,6 +1,9 @@
 <script setup>
-import { computed, onMounted, onUnmounted, ref, unref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { DateTime } from 'luxon';
+import _ from 'lodash';
 import chunkArray from '@/chunkArray.js';
+import truncate from '@/truncate.js';
 
 const props = defineProps({
   title: {
@@ -24,29 +27,6 @@ const props = defineProps({
 const currentTime = ref(DateTime.now());
 const currentPageIndex = ref(0);
 
-onMounted(() => {
-  const interval = setInterval(() => {
-    currentTime.value = DateTime.now();
-  }, 5000);
-  const pageSwitcher = setInterval(() => {
-    currentPageIndex.value = (currentPageIndex.value + 1) % schedulePages.value.length;
-  }, props.pageSwitchingTimer);
-  onUnmounted(() => {
-    clearInterval(interval);
-    clearInterval(pageSwitcher);
-  });
-});
-
-String.prototype.truncate =
-  String.prototype.truncate ||
-  function (n, useWordBoundary) {
-    if (this.length <= n) {
-      return this;
-    }
-    const subString = this.slice(0, n - 1); // the original check
-    return `${useWordBoundary ? subString.slice(0, subString.lastIndexOf(' ')) : subString  } …`;
-  };
-
 const filteredEvents = computed(() => {
   return _.cloneDeep(props.schedule)
     .filter(event => {
@@ -56,7 +36,7 @@ const filteredEvents = computed(() => {
         !event.title.toLowerCase().includes('seating')
       );
     })
-    .map((event, index) => {
+    .map(event => {
       if (event.room.name.includes(event.title) || event.title.includes(event.room.name)) {
         if (event.room.name !== event.room.venue_name) {
           event.room.name = event.room.venue_name;
@@ -82,7 +62,7 @@ const filteredEvents = computed(() => {
         }
       }
 
-      event.title = event.title.truncate(24, true);
+      event.title = truncate(event.title, 24, true);
 
       return event;
     });
@@ -96,10 +76,20 @@ const currentSlide = computed(() => {
   return schedulePages.value[currentPageIndex.value];
 });
 
-import { DateTime } from 'luxon';
-import _ from 'lodash';
+onMounted(() => {
+  const interval = setInterval(() => {
+    currentTime.value = DateTime.now();
+  }, 5000);
+  const pageSwitcher = setInterval(() => {
+    currentPageIndex.value = (currentPageIndex.value + 1) % schedulePages.value.length;
+  }, props.pageSwitchingTimer);
+  onUnmounted(() => {
+    clearInterval(interval);
+    clearInterval(pageSwitcher);
+  });
+});
 
-function onBeforeEnter(el) {
+function onBeforeEnter() {
   //spanify(el);
 }
 
@@ -117,7 +107,7 @@ function onEnter(node, done) {
   }, 4000);
 }
 
-function onBeforeLeave(el) {
+function onBeforeLeave() {
   //spanify(el);
 }
 
