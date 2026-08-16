@@ -107,16 +107,6 @@
   font-size: 68px;
 }
 
-/* Full-bleed decorative frame drawn by the layouts, above the page content. */
-.background_foreground {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 100vw;
-  height: 100vh;
-  pointer-events: none;
-}
-
 .animation > div {
   position: absolute;
   width: 1670px;

@@ -1,26 +1,19 @@
 <script setup>
-defineProps(['page']);
+defineProps(['page', 'appScreen']);
 
 defineOptions({
   inheritAttrs: false,
 });
+
+import Stage from '@/Projects/EF30/Components/Stage.vue';
 </script>
 
 <template>
   <div>
-    <!-- background -->
-    <div style="position: absolute; left: 0; top: 0; width: 100vw; height: 100vh; z-index: -1">
-      <img src="../Assets/images/background.png" class="background_foreground" style="z-index: -1" />
-    </div>
-
-    <div class="h-screen overflow-auto bg-transparent flex flex-col flex-grow">
-      <!-- Main Content -->
+    <Stage :appScreen="appScreen">
       <Transition mode="out-in">
         <slot></slot>
       </Transition>
-    </div>
-
-    <!-- foreground, drawn over the page content -->
-    <img src="../Assets/images/foreground_with_logo.png" class="background_foreground" style="z-index: 9999" />
+    </Stage>
   </div>
 </template>
