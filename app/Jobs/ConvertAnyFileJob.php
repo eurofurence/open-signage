@@ -20,7 +20,7 @@ class ConvertAnyFileJob implements ShouldQueue
     public function handle(): void
     {
         Artisan::call('images:convert', [
-            '--folder' => ''
+            '--folder' => true
         ]);
     }
 }

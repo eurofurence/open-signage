@@ -19,7 +19,7 @@ class ImagesConvertCommand extends Command
     {
         $query = Artwork::query();
 
-        if($this->hasOption('folder')) {
+        if($this->option('folder')) {
             // Get all files in the public folder and put them into an array
             // Remove all that have a duplicate .webp file or end in .webp
             // Create a webp version of them
