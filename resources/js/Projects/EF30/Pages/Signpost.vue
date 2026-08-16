@@ -87,7 +87,7 @@ onMounted(() => {
         v-for="(item, _index) in currentSignPostPage"
         class="flex flex-col relative z-30 text-white magic-text theme-font w-[100vw]"
       >
-        <div class="mx-12 my-8 flex flex-row flex-nowrap items-center">
+        <div class="mx-16 my-16 flex flex-row flex-nowrap items-center">
           <div v-if="item.pivot.icon" class="min-w-[200px] mr-6">
             <IconRouter
               :path="page.path"
@@ -105,7 +105,7 @@ onMounted(() => {
 
               <div
                 v-if="item.name !== item.venue_name && item.venue_name"
-                class="flex text-[2.5vw] text-left items-center leading-none"
+                class="flex text-[2.5vw] text-left items-center leading-none ml-8"
               >
                 ( {{ item.venue_name }} )
               </div>
