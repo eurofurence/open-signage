@@ -31,12 +31,13 @@ const props = defineProps({
 
 const state = useAppState();
 const appScreen = ref(props.initialScreen);
+const screenId = props.initialScreen.id;
 
 const ping = () => {
   window.axios
     .post(
       route('screens.ping', {
-        screen: props.initialScreen.id,
+        screen: screenId,
         shared_secret: new URLSearchParams(window.location.search).get('shared_secret'),
         version: state.version,
       }),
@@ -121,7 +122,7 @@ window.Echo.channel('ScreenAll')
     state.version++;
   });
 
-window.Echo.channel(`Screen.${props.initialScreen.id}`)
+window.Echo.channel(`Screen.${screenId}`)
   .listen('.screen.refresh', () => {
     window.location.reload();
   })
