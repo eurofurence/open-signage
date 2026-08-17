@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Laravel\Socialite\Two\AbstractProvider;
 use Laravel\Socialite\Two\User;
+use RuntimeException;
 
 class SocialiteIdentityProvider extends AbstractProvider
 {
@@ -39,13 +40,18 @@ class SocialiteIdentityProvider extends AbstractProvider
 
     public function getIdentityConfig()
     {
-        // Get from cache if exists
-        if (isset($this->issuet)) {
+        if (isset($this->issuer)) {
             return $this;
         }
-        // Get from services.identity.openid_configuration url and cache it
-        $config = Cache::remember('identity_config', now()->addDay(), function () {
-            return Http::get(config('services.identity.openid_configuration'))->throw()->json();
+
+        $discoveryUrl = config('services.identity.openid_configuration');
+
+        if (blank($discoveryUrl)) {
+            throw new RuntimeException('IDENTITY_OPENID_CONFIGURATION is not set, but identity login is enabled.');
+        }
+
+        $config = Cache::remember('identity_config', now()->addDay(), function () use ($discoveryUrl) {
+            return Http::get($discoveryUrl)->throw()->json();
         });
         $this->issuer = $config['issuer'];
         $this->userinfoEndpoint = $config['userinfo_endpoint'];
