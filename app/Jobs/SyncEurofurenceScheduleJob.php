@@ -14,27 +14,27 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
+use RuntimeException;
 
 class SyncEurofurenceScheduleJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     public function handle(): void
     {
         $pretalxDomain = config('services.pretalx.domain');
         $pretalxSchedule = config('services.pretalx.schedule');
-        $scheduleJsonUrl = "https://$pretalxDomain/$pretalxSchedule/api/schedule";
+        $scheduleJsonUrl = "https://{$pretalxDomain}/{$pretalxSchedule}/api/schedule";
 
         $schedule = Http::get($scheduleJsonUrl)->json();
 
         $project = Project::where('path', config('app.default_project'))->firstOrFail();
 
         $schedule['days'] = array_map(function ($day) {
-            $day['slots'] = array_values(array_filter($day['slots'], fn($slot) => filled($slot['room']['id'] ?? null)
+            $day['slots'] = array_values(array_filter($day['slots'], fn ($slot) => filled($slot['room']['id'] ?? null)
+                && filled($slot['code'] ?? null)
                 && filled($slot['start'] ?? null)
                 && filled($slot['end'] ?? null)));
 
@@ -59,29 +59,35 @@ class SyncEurofurenceScheduleJob implements ShouldQueue
 
         Room::upsert($scheduleRooms, 'external_id', ['name']);
 
-        $scheduleEntries = array_reduce($schedule['days'], function ($carry, $day) use ($project) {
-            $scheduleEntries = array_map(function ($slot) use ($project) {
-                $slot["start"] = new Carbon($slot["start"]);
-                $slot["end"] = new Carbon($slot["end"]);
-                $slot["delay"] = 0;
+        $rooms = Room::where('project_id', $project->id)
+            ->whereNotNull('external_id')
+            ->get()
+            ->keyBy('external_id');
+
+        $currentEntries = ScheduleEntry::where('project_id', $project->id)
+            ->whereNotNull('external_id')
+            ->get()
+            ->keyBy('external_id');
+
+        $scheduleEntries = array_reduce($schedule['days'], function ($carry, $day) use ($project, $rooms, $currentEntries) {
+            $scheduleEntries = array_map(function ($slot) use ($project, $rooms, $currentEntries) {
+                $slot['start'] = new Carbon($slot['start']);
+                $slot['end'] = new Carbon($slot['end']);
+                $slot['delay'] = 0;
 
                 $externalId = $slot['code'] . '-' . $slot['start']->toDateString();
 
-                $room = Room::where('project_id', $project->id)
-                    ->where('external_id', $slot['room']['id'])
-                    ->firstOrFail();
+                $room = $rooms->get($slot['room']['id']) ?? throw new RuntimeException("Room {$slot['room']['id']} missing after upsert");
 
                 if (config('app.enable_delay_detection')) {
-                    $currentEntry = ScheduleEntry::where('project_id', $project->id)
-                        ->where('external_id', $externalId)
-                        ->first();
+                    $currentEntry = $currentEntries->get($externalId);
 
                     if ($currentEntry) {
                         $delay = $currentEntry->starts_at->diff($slot['start']);
-                        $inLessThanFourHours = $currentEntry->starts_at->diff(Carbon::now())->compare(CarbonInterval::make("4 hours")) <= 0;
-                        $lessThanFourHoursDelay = $delay->compare(CarbonInterval::make("4 hours")) <= 0;
+                        $inLessThanFourHours = $currentEntry->starts_at->diff(Carbon::now())->compare(CarbonInterval::make('4 hours')) <= 0;
+                        $lessThanFourHoursDelay = $delay->compare(CarbonInterval::make('4 hours')) <= 0;
 
-                        if ($currentEntry->delay >= 0 || ($inLessThanFourHours && $lessThanFourHoursDelay)) {
+                        if ($currentEntry->delay > 0 || ($inLessThanFourHours && $lessThanFourHoursDelay)) {
                             $length = $slot['start']->diff($slot['end']);
                             $slot['start'] = $currentEntry->starts_at;
                             $slot['end'] = $currentEntry->starts_at->add($length);
@@ -112,7 +118,7 @@ class SyncEurofurenceScheduleJob implements ShouldQueue
         $signaturesBefore = ScheduleEntry::where('project_id', $project->id)
             ->whereIn('external_id', $externalIds)
             ->get()
-            ->mapWithKeys(fn(ScheduleEntry $entry) => [$entry->external_id => $this->signature($entry)]);
+            ->mapWithKeys(fn (ScheduleEntry $entry) => [$entry->external_id => $this->signature($entry)]);
 
         ScheduleEntry::upsert($scheduleEntries, 'external_id', ['room_id', 'title', 'description', 'delay', 'starts_at', 'ends_at']);
 
@@ -129,6 +135,15 @@ class SyncEurofurenceScheduleJob implements ShouldQueue
 
                 broadcast(new UpdateScheduleEvent($entry, is_null($before) ? 'create' : 'update'));
             });
+
+        if ($externalIds !== []) {
+            ScheduleEntry::where('project_id', $project->id)
+                ->whereNotNull('external_id')
+                ->whereNotIn('external_id', $externalIds)
+                ->get()
+                ->each
+                ->delete();
+        }
     }
 
     private function signature(ScheduleEntry $entry): string

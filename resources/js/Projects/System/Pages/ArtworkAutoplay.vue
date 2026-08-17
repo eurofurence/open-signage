@@ -67,12 +67,17 @@ onBeforeUnmount(() => {
   stopCarousel(carousel.value);
 });
 
+const shuffleRanks = new Map();
+
+const shuffleRankOf = id => {
+  if (!shuffleRanks.has(id)) shuffleRanks.set(id, Math.random());
+  return shuffleRanks.get(id);
+};
+
 const artworksFilteredWithoutMissingOrientation = computed(() => {
-  const filteredArt = state.artworks.filter(artwork => {
-    return Boolean(artwork[screenOrientation.value]);
-  });
-  // Randomize the order of the artworks
-  return filteredArt.sort(() => Math.random() - 0.5);
+  return state.artworks
+    .filter(artwork => Boolean(artwork[screenOrientation.value]))
+    .sort((a, b) => shuffleRankOf(a.id) - shuffleRankOf(b.id));
 });
 </script>
 

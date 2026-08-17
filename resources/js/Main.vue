@@ -6,10 +6,6 @@ import { useAppState } from '@/state.js';
 import { synced } from '@/synced.js';
 
 const props = defineProps({
-  initialPages: {
-    type: Array,
-    default: () => [],
-  },
   initialSchedule: {
     type: Array,
     required: true,
@@ -56,6 +52,8 @@ synced(0, 5000, () => {
   state.currentTime = Date.now();
 });
 
+const compareScheduleEntries = (a, b) => a.starts_at.localeCompare(b.starts_at) || a.title.localeCompare(b.title);
+
 onMounted(() => {
   ping();
   const pingInterval = setInterval(ping, 60000);
@@ -89,32 +87,12 @@ window.Echo.channel('ScreenAll')
   })
   .listen('.schedule.create', scheduleEntry => {
     state.schedule.push(scheduleEntry);
-
-    state.schedule.sort((a, b) => {
-      const timeCompare = a.starts_at.localeCompare(b.starts_at);
-
-      if (timeCompare !== 0) {
-        return timeCompare;
-      }
-
-      return a.title.localeCompare(b.title);
-    });
-
+    state.schedule.sort(compareScheduleEntries);
     state.version++;
   })
   .listen('.schedule.update', scheduleEntry => {
     state.schedule = state.schedule.map(old => (old.id === scheduleEntry.id ? scheduleEntry : old));
-
-    state.schedule.sort((a, b) => {
-      const timeCompare = a.starts_at.localeCompare(b.starts_at);
-
-      if (timeCompare !== 0) {
-        return timeCompare;
-      }
-
-      return a.title.localeCompare(b.title);
-    });
-
+    state.schedule.sort(compareScheduleEntries);
     state.version++;
   })
   .listen('.schedule.delete', scheduleEntry => {
@@ -197,18 +175,26 @@ let updatePlaylistItemTimeout = null;
 const currentPlaylistItem = ref(null);
 
 function updatePlaylistItem() {
-  const now = Date.now();
-  let period = Math.round(now) % cycleLength.value;
+  clearTimeout(updatePlaylistItemTimeout);
+
+  const items = activePlaylistItems.value;
+
+  if (items.length === 0 || cycleLength.value <= 0) {
+    currentPlaylistItem.value = null;
+    updatePlaylistItemTimeout = setTimeout(updatePlaylistItem, 1000);
+    return;
+  }
+
+  let period = Date.now() % cycleLength.value;
   let index = -1;
 
   while (period >= 0) {
     index++;
-    period -= parseInt(activePlaylistItems.value[index].duration, 10) * 1000;
+    period -= parseInt(items[index].duration, 10) * 1000;
   }
 
-  if (index < 0) index = 0;
-  currentPlaylistItem.value = activePlaylistItems.value[index];
-  const rest = now - Date.now() + parseInt(activePlaylistItems.value[index].duration, 10) * 1000;
+  currentPlaylistItem.value = items[index];
+  const rest = -period;
   updatePlaylistItemTimeout = setTimeout(updatePlaylistItem, rest < 1000 ? 1000 : rest);
 }
 
@@ -224,36 +210,26 @@ const projectComponents = {
 
 const layoutComponents = computed(() =>
   state.playlist.playlist_items.reduce((acc, curr) => {
-    const id = curr.layout_id;
     const path = `./Projects/${curr.layout.project.path}/Layouts/${curr.layout.component}.vue`;
-    if (acc[id]?.path === path) return acc;
-
-    return {
-      ...acc,
-      [id]: {
-        id,
-        path,
-        component: projectComponents[path]?.default ?? None,
-      },
+    acc[curr.layout_id] = {
+      id: curr.layout_id,
+      path,
+      component: projectComponents[path]?.default ?? None,
     };
-  }, layoutComponents.value ?? {}),
+    return acc;
+  }, {}),
 );
 
 const pageComponents = computed(() =>
   state.playlist.playlist_items.reduce((acc, curr) => {
-    const id = curr.page_id;
     const path = `./Projects/${curr.page.project.path}/Pages/${curr.page.component}.vue`;
-    if (acc[id]?.path === path) return acc;
-
-    return {
-      ...acc,
-      [id]: {
-        id,
-        path,
-        component: projectComponents[path]?.default ?? Error,
-      },
+    acc[curr.page_id] = {
+      id: curr.page_id,
+      path,
+      component: projectComponents[path]?.default ?? Error,
     };
-  }, pageComponents.value ?? {}),
+    return acc;
+  }, {}),
 );
 
 const activeLayout = computed(

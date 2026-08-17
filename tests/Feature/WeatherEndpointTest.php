@@ -22,10 +22,7 @@ class WeatherEndpointTest extends TestCase
         config(['services.weather.url' => 'https://weather.example.test/api/summary?lang=en']);
     }
 
-    /**
-     * @test
-     */
-    public function it_proxies_the_configured_weather_api()
+    public function test_it_proxies_the_configured_weather_api()
     {
         Http::fake(['weather.example.test/*' => Http::response(self::SUMMARY)]);
 
@@ -37,10 +34,7 @@ class WeatherEndpointTest extends TestCase
         Http::assertSent(fn ($request) => $request->url() === 'https://weather.example.test/api/summary?lang=en');
     }
 
-    /**
-     * @test
-     */
-    public function it_only_calls_the_weather_api_once_per_cache_window()
+    public function test_it_only_calls_the_weather_api_once_per_cache_window()
     {
         Http::fake(['weather.example.test/*' => Http::response(self::SUMMARY)]);
 
@@ -50,10 +44,7 @@ class WeatherEndpointTest extends TestCase
         Http::assertSentCount(1);
     }
 
-    /**
-     * @test
-     */
-    public function it_keeps_serving_the_last_good_summary_when_the_weather_api_fails()
+    public function test_it_keeps_serving_the_last_good_summary_when_the_weather_api_fails()
     {
         Http::fake([
             'weather.example.test/*' => Http::sequence()
@@ -71,20 +62,14 @@ class WeatherEndpointTest extends TestCase
             ->assertJsonPath('summary.fsi.score', 9.9);
     }
 
-    /**
-     * @test
-     */
-    public function it_reports_unavailable_when_there_is_nothing_to_serve()
+    public function test_it_reports_unavailable_when_there_is_nothing_to_serve()
     {
         Http::fake(['weather.example.test/*' => Http::response('nope', 500)]);
 
         $this->getJson(route('api.weather.get'))->assertStatus(503);
     }
 
-    /**
-     * @test
-     */
-    public function it_reports_unavailable_without_a_configured_url()
+    public function test_it_reports_unavailable_without_a_configured_url()
     {
         config(['services.weather.url' => null]);
         Http::fake();

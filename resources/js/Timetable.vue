@@ -27,9 +27,18 @@ const props = defineProps({
 
 const schedule = ref(props.initialSchedule);
 
-window.Echo.channel('ScreenAll').listen('.schedule.update', e => {
-  schedule.value = e.schedule;
-});
+const compareScheduleEntries = (a, b) => a.starts_at.localeCompare(b.starts_at);
+
+window.Echo.channel('ScreenAll')
+  .listen('.schedule.create', entry => {
+    schedule.value = [...schedule.value, entry].sort(compareScheduleEntries);
+  })
+  .listen('.schedule.update', entry => {
+    schedule.value = schedule.value.map(old => (old.id === entry.id ? entry : old)).sort(compareScheduleEntries);
+  })
+  .listen('.schedule.delete', entry => {
+    schedule.value = schedule.value.filter(old => old.id !== entry.id);
+  });
 
 const groupedSchedule = computed(() => {
   // Group by date
@@ -50,7 +59,7 @@ const groupedSchedule = computed(() => {
     }, {});
 });
 
-const count = Object.keys(groupedSchedule.value).length;
+const count = computed(() => Object.keys(groupedSchedule.value).length);
 
 function eventHeight() {
   return 0;
@@ -69,11 +78,11 @@ const showItemsBasedOnScreenSize = computed(() => {
   } else if (width < 1920) {
     showItems = 3;
   } else {
-    showItems = count;
+    showItems = count.value;
   }
 
-  if (showItems >= count) {
-    showItems = count;
+  if (showItems >= count.value) {
+    showItems = count.value;
   }
 
   return showItems;

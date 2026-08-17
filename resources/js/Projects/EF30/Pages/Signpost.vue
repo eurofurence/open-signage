@@ -1,7 +1,6 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { DateTime } from 'luxon';
-import { cloneDeep } from 'lodash';
 import IconRouter from '@/Projects/System/Components/IconRouter.vue';
 import chunkArray from '@/chunkArray.js';
 import truncate from '@/truncate.js';
@@ -23,10 +22,6 @@ const props = defineProps({
     type: Array,
     default: [],
   },
-  page: {
-    type: Object,
-    required: false,
-  },
   pageSwitchingTimer: {
     type: Number,
     default: 15000,
@@ -36,23 +31,24 @@ const props = defineProps({
 const currentTime = ref(DateTime.now());
 const currentPageIndex = ref(0);
 
-const nextEvent = function (room) {
-  return computed(() => {
-    return cloneDeep(props.schedule)
-      .filter(event => {
-        return event.room_id === room.id;
+const nextEventByRoom = computed(() => {
+  const byRoom = {};
+
+  for (const event of props.schedule) {
+    if (byRoom[event.room_id]) continue;
+
+    if (
+      currentTime.value <=
+      DateTime.fromISO(event.ends_at).plus({
+        minutes: event.delay,
       })
-      .filter(event => {
-        return (
-          currentTime.value <=
-          DateTime.fromISO(event.ends_at).plus({
-            minutes: event.delay,
-          })
-        );
-      })
-      .shift();
-  });
-};
+    ) {
+      byRoom[event.room_id] = event;
+    }
+  }
+
+  return byRoom;
+});
 
 function containsOnly(title) {
   return title.includes('Only') || title.includes('only') || title.includes('ONLY');
@@ -63,7 +59,7 @@ const signPostPages = computed(() => {
 });
 
 const currentSignPostPage = computed(() => {
-  return signPostPages.value[currentPageIndex.value];
+  return signPostPages.value[currentPageIndex.value] ?? signPostPages.value[0];
 });
 
 onMounted(() => {
@@ -71,7 +67,8 @@ onMounted(() => {
     currentTime.value = DateTime.now();
   }, 5000);
   const pageSwitcher = setInterval(() => {
-    currentPageIndex.value = (currentPageIndex.value + 1) % signPostPages.value.length;
+    const pageCount = signPostPages.value.length;
+    currentPageIndex.value = pageCount === 0 ? 0 : (currentPageIndex.value + 1) % pageCount;
   }, props.pageSwitchingTimer);
   onUnmounted(() => {
     clearInterval(interval);
@@ -90,7 +87,7 @@ onMounted(() => {
         <div class="mx-16 my-16 flex flex-row flex-nowrap items-center">
           <div v-if="item.pivot.icon" class="min-w-[200px] mr-6">
             <IconRouter
-              :path="page.path"
+              path="EF30"
               class="fill-white w-[200px] svgIconGlow"
               :icon="item.pivot.icon"
               :mirror="item.pivot.mirror"
@@ -111,10 +108,10 @@ onMounted(() => {
               </div>
             </div>
 
-            <div v-if="nextEvent(item).value" class="flex text-[5vw] leading-none">
+            <div v-if="nextEventByRoom[item.id]" class="flex text-[5vw] leading-none">
               <div class="mr-3">
                 <div
-                  v-if="DateTime.fromISO(nextEvent(item).value.starts_at) < DateTime.local()"
+                  v-if="DateTime.fromISO(nextEventByRoom[item.id].starts_at) < DateTime.local()"
                   class="text-left leading-none"
                 >
                   Now:
@@ -123,17 +120,17 @@ onMounted(() => {
               </div>
               <div>
                 <div>
-                  <div class="leading-none" v-if="nextEvent(item).value.title.split(' – ')[0]">
-                    {{ truncate(nextEvent(item).value.title.split(' – ')[0], 30) }}
+                  <div class="leading-none" v-if="nextEventByRoom[item.id].title.split(' – ')[0]">
+                    {{ truncate(nextEventByRoom[item.id].title.split(' – ')[0], 30) }}
                   </div>
                   <div
                     :class="{
-                      'text-green-300': containsOnly(nextEvent(item).value.title),
+                      'text-green-300': containsOnly(nextEventByRoom[item.id].title),
                     }"
                     class="text-[3vw] leading-none"
-                    v-if="nextEvent(item).value.title.split(' – ')[1]"
+                    v-if="nextEventByRoom[item.id].title.split(' – ')[1]"
                   >
-                    {{ truncate(nextEvent(item).value.title.split(' – ')[1], 45) }}
+                    {{ truncate(nextEventByRoom[item.id].title.split(' – ')[1], 45) }}
                   </div>
                 </div>
               </div>
@@ -143,14 +140,14 @@ onMounted(() => {
           <div class="flex flex-0 flex-row text-white w-[20vw] space-x-8">
             <IconRouter
               v-if="item.pivot.flags ? item.pivot.flags.includes('wheelchair') : false"
-              :path="page.path"
+              path="EF30"
               class="flex fill-white w-[5vw] svgIconGlow"
               icon="Wheelchair"
             ></IconRouter>
 
             <IconRouter
               v-if="item.pivot.flags ? item.pivot.flags.includes('first_aid') : false"
-              :path="page.path"
+              path="EF30"
               class="flex w-[5vw] svgIconGlow"
               icon="FirstAid"
             ></IconRouter>

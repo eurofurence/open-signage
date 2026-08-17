@@ -16,19 +16,18 @@ class ScreenController extends Controller
         abort_if(is_null($finalSlug), 400, 'No slug provided');
 
         $screen = Screen::with('rooms')->firstOrCreate(['slug' => $finalSlug], [
-            'name' => 'New Screen '.$finalSlug,
+            'name' => 'New Screen ' . $finalSlug,
             'slug' => $finalSlug,
             'playlist_id' => app(GeneralSettings::class)->playlist_id,
             'provisioned' => false,
         ]);
 
         return Inertia::render('Main', [
-            'initialPages' => ScreenDataGenerator::pages($screen),
             'initialScreen' => ScreenDataGenerator::screen($screen),
             'initialPlaylist' => ScreenDataGenerator::playlist($screen),
             'initialArtworks' => ScreenDataGenerator::artworks(),
             'initialAnnouncements' => ScreenDataGenerator::announcements(),
-            'initialSchedule' => ScreenDataGenerator::schedule()
+            'initialSchedule' => ScreenDataGenerator::schedule(),
         ]);
     }
 }

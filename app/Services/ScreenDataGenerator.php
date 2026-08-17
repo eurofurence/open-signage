@@ -17,33 +17,13 @@ class ScreenDataGenerator
         return Announcement::all()->toArray();
     }
 
-    public static function pages(Screen $screen)
-    {
-        $screen->loadMissing(['playlist.playlistItems.layout.project', 'playlist.playlistItems.page.project']);
-        return $screen->playlist->playlistItems
-            ->reject(fn(PlaylistItem $playlistItem) => $playlistItem->is_active === false)
-            ->sortBy('sort')
-            ->map(fn(PlaylistItem $playlistItem) => [
-                'layout' => [
-                    'component' => $playlistItem->layout->component,
-                    'path' => $playlistItem->layout->project->path,
-                ],
-                'path' => $playlistItem->page->project->path,
-                'component' => $playlistItem->page->component,
-                'props' => $playlistItem->parsedContent(),
-                'duration' => $playlistItem->duration,
-                'title' => $playlistItem->title ?? '',
-                'starts_at' => $playlistItem->starts_at,
-                'ends_at' => $playlistItem->ends_at,
-            ])->values();
-    }
-
     public static function screen(Screen $screen): array
     {
         $data = $screen
             ->loadMissing('rooms', 'room')
             ->toArray();
-        $data['rooms'] = collect($data['rooms'])->sortBy(fn($room) => $room['pivot']['sort'])->values();
+        $data['rooms'] = collect($data['rooms'])->sortBy(fn ($room) => $room['pivot']['sort'])->values();
+
         return $data;
     }
 
@@ -54,7 +34,7 @@ class ScreenDataGenerator
 
         return array_replace($playlist->toArray(), [
             'playlist_items' => $playlist->playlistItems
-                ->map(fn(PlaylistItem $playlistItem) => $playlistItem->toScreenArray())
+                ->map(fn (PlaylistItem $playlistItem) => $playlistItem->toScreenArray())
                 ->values()
                 ->toArray(),
         ]);
@@ -62,7 +42,7 @@ class ScreenDataGenerator
 
     public static function artworks(): array
     {
-        return Artwork::all()->map(fn(Artwork $artwork) => self::artwork($artwork))->toArray();
+        return Artwork::all()->map(fn (Artwork $artwork) => self::artwork($artwork))->toArray();
     }
 
     public static function artwork(Artwork $artwork): array

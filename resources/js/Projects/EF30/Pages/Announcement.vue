@@ -20,6 +20,10 @@ defineProps({
     type: String,
     default: 'text-9xl',
   },
+  useContainer: {
+    type: Boolean,
+    default: false,
+  },
 });
 </script>
 

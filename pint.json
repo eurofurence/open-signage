@@ -34,7 +34,7 @@
       "imports_order": ["const", "class", "function"]
     },
     "php_unit_test_annotation": {
-      "style": "annotation"
+      "style": "prefix"
     },
     "simple_to_complex_string_variable": true
   }

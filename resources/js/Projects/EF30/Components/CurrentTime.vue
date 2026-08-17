@@ -171,12 +171,12 @@ function getTime() {
 @keyframes in {
   from {
     opacity: 0;
-    filter: 'blur(20px)';
+    filter: blur(20px);
   }
 
   to {
     opacity: 1;
-    filter: 'blur(0px)';
+    filter: blur(0);
   }
 }
 
@@ -187,12 +187,12 @@ function getTime() {
 @keyframes out {
   from {
     opacity: 1;
-    filter: 'blur(0px)';
+    filter: blur(0);
   }
 
   to {
     opacity: 0;
-    filter: 'blur(20px)';
+    filter: blur(20px);
   }
 }
 </style>

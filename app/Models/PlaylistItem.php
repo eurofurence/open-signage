@@ -2,12 +2,12 @@
 
 namespace App\Models;
 
-use Storage;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
+use Storage;
 
 class PlaylistItem extends Model
 {
@@ -68,18 +68,24 @@ class PlaylistItem extends Model
     {
         $schema = collect($this->page->schema);
         $data = collect($this->content)->map(function ($value, $key) use (&$schema) {
-            $property = $schema->where('property',$key)->first();
+            $property = $schema->where('property', $key)->first();
             if (is_null($property)) {
                 return $value;
             }
-            if($property['type'] === "ImageInput" || $property['type'] === "FileInput") {
-                if(Str::endsWith($value, ['jpg', 'jpeg', 'png'])) {
-                    return Storage::url($value.".webp");
+            if ($property['type'] === 'ImageInput' || $property['type'] === 'FileInput') {
+                if (blank($value)) {
+                    return $value;
                 }
+                if (Str::endsWith($value, ['jpg', 'jpeg', 'png'])) {
+                    return Storage::url($value . '.webp');
+                }
+
                 return Storage::url($value);
             }
+
             return $value;
         });
+
         return $data->toArray();
     }
 }

@@ -100,6 +100,7 @@ function positiveNumber(value, fallback) {
 
 function enabled(value) {
   if (value === null || value === undefined) return true;
+  if (typeof value === 'string') return !['false', '0', ''].includes(value.trim().toLowerCase());
 
   return Boolean(value);
 }
@@ -181,7 +182,9 @@ const clockFormatter = computed(
 );
 
 function clockOf(value) {
-  return hourFormatter.value.format(new Date(value));
+  const date = new Date(value);
+
+  return Number.isNaN(date.getTime()) ? '' : hourFormatter.value.format(date);
 }
 
 const clock = computed(() => clockFormatter.value.format(new Date(state.currentTime)));
@@ -190,19 +193,29 @@ const eventName = computed(() => summary.value?.event?.name ?? '');
 const locationName = computed(() => summary.value?.location?.name ?? '');
 const scoreColor = computed(() => fsi.value?.color ?? FALLBACK_COLOR);
 const scoreInk = computed(() => contrastText(scoreColor.value));
-const scoreText = computed(() => (fsi.value ? fsi.value.score.toFixed(1) : '–'));
+const scoreText = computed(() => {
+  const score = Number(fsi.value?.score);
+
+  return Number.isFinite(score) ? score.toFixed(1) : '–';
+});
 
 const breakdown = computed(() => {
   const subscores = fsi.value?.subscores;
 
   if (!subscores) return [];
 
-  return Object.keys(subscores).map(key => ({
-    key,
-    label: subscores[key].label ?? summary.value?.subscore_labels?.[key] ?? capitalise(key),
-    text: subscores[key].score.toFixed(1),
-    width: `${Math.max(2, subscores[key].score * 10)}%`,
-  }));
+  return Object.keys(subscores)
+    .filter(key => Number.isFinite(Number(subscores[key]?.score)))
+    .map(key => {
+      const score = Number(subscores[key].score);
+
+      return {
+        key,
+        label: subscores[key].label ?? summary.value?.subscore_labels?.[key] ?? capitalise(key),
+        text: score.toFixed(1),
+        width: `${Math.max(2, score * 10)}%`,
+      };
+    });
 });
 
 const hours = computed(() => {
@@ -268,6 +281,9 @@ function spanOf(start, end) {
   if (!list.length) return null;
 
   const from = new Date(start).getTime();
+
+  if (!Number.isFinite(from)) return null;
+
   const to = end ? new Date(end).getTime() : Infinity;
   let first = -1;
   let last = -1;
@@ -293,7 +309,10 @@ function spanOf(start, end) {
 }
 
 function windowText(mark, word, window, covered) {
-  if (covered >= 6) return `${mark} ${word} ${clockOf(window.start)} – ${clockOf(window.end)}`;
+  const start = window?.start ? clockOf(window.start) : '';
+  const end = window?.end ? clockOf(window.end) : '';
+
+  if (covered >= 6 && start && end) return `${mark} ${word} ${start} – ${end}`;
   if (covered >= 3) return `${mark} ${word}`;
 
   return mark;
@@ -358,7 +377,8 @@ const alerts = computed(() => {
   (data.warnings ?? []).forEach((warning, index) => {
     const color = warning.color || '#ffd633';
     const name = warning.event_en || warning.event;
-    const until = warning.end ? `until ${clockOf(warning.end)}` : '';
+    const endText = warning.end ? clockOf(warning.end) : '';
+    const until = endText ? `until ${endText}` : '';
 
     chips.push({
       key: `warning-${index}`,

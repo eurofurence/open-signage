@@ -2,27 +2,19 @@
 
 namespace App\Filament\Resources\ScheduleEntries;
 
-use App\Models\Project;
-use App\Models\Room;
-use Carbon\CarbonInterval;
-use Filament\Actions\Action;
-use Filament\Infolists\Components\TextEntry;
-use Filament\Schemas\Components\Utilities\Set;
-use Filament\Schemas\Schema;
-use Filament\Schemas\Components\Group;
-use Filament\Schemas\Components\Section;
-use Filament\Schemas\Components\Utilities\Get;
-use Filament\Actions\EditAction;
-use Filament\Actions\ReplicateAction;
-use Filament\Actions\DeleteAction;
-use App\Filament\Resources\ScheduleEntries\Pages\ListScheduleEntries;
 use App\Filament\Resources\ScheduleEntries\Pages\CreateScheduleEntry;
 use App\Filament\Resources\ScheduleEntries\Pages\EditScheduleEntry;
+use App\Filament\Resources\ScheduleEntries\Pages\ListScheduleEntries;
 use App\Models\Playlist;
-use App\Models\PlaylistItem;
+use App\Models\Project;
 use App\Models\ScheduleEntry;
 use App\Models\Screen;
-use App\Settings\GeneralSettings;
+use BackedEnum;
+use Carbon\CarbonInterval;
+use Filament\Actions\Action;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\ReplicateAction;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\ColorPicker;
@@ -31,20 +23,26 @@ use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Group;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Facades\Log;
+use UnitEnum;
 
 class ScheduleEntryResource extends Resource
 {
     protected static ?string $model = ScheduleEntry::class;
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Content';
+    protected static string|UnitEnum|null $navigationGroup = 'Content';
 
-    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-m-table-cells';
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-m-table-cells';
 
     protected static ?string $slug = 'schedule-entries';
 
@@ -61,43 +59,43 @@ class ScheduleEntryResource extends Resource
                         Textarea::make('description'),
 
                         Select::make('room_id')
-                            ->relationship('room', 'name', modifyQueryUsing: fn(Builder $query, Get $get) => $query
-                                ->when($get('project_id'), fn(Builder $query, $projectId) => $query->where('project_id', $projectId)))
+                            ->relationship('room', 'name', modifyQueryUsing: fn (Builder $query, Get $get) => $query
+                                ->when($get('project_id'), fn (Builder $query, $projectId) => $query->where('project_id', $projectId)))
                             ->required()
-                            ->createOptionForm(fn(Schema $schema, Get $get) => $schema->components([
+                            ->createOptionForm(fn (Schema $schema, Get $get) => $schema->components([
                                 TextInput::make('name')
                                     ->required(),
                                 Select::make('project_id')
                                     ->relationship('project', 'name')
-                                    ->default(fn() => $get('project_id'))
+                                    ->default(fn () => $get('project_id'))
                                     ->required()
-                                    ->disabled()
+                                    ->disabled(),
                             ]))
-                            ->editOptionForm(fn(Schema $schema) => $schema->components([
+                            ->editOptionForm(fn (Schema $schema) => $schema->components([
                                 TextInput::make('name')
                                     ->required(),
                             ])),
 
                         Select::make('schedule_organizer_id')
                             ->relationship('scheduleOrganizer', 'name')
-                            ->createOptionForm(fn(Schema $schema) => $schema->components([
+                            ->createOptionForm(fn (Schema $schema) => $schema->components([
                                 TextInput::make('name')
                                     ->required(),
                             ]))
-                            ->editOptionForm(fn(Schema $schema) => $schema->components([
+                            ->editOptionForm(fn (Schema $schema) => $schema->components([
                                 TextInput::make('name')
                                     ->required(),
                             ])),
 
                         Select::make('schedule_type_id')
                             ->relationship('scheduleType', 'name')
-                            ->createOptionForm(fn(Schema $schema) => $schema->components([
+                            ->createOptionForm(fn (Schema $schema) => $schema->components([
                                 TextInput::make('name')
                                     ->required(),
                                 ColorPicker::make('color')
                                     ->required(),
                             ]))
-                            ->editOptionForm(fn(Schema $schema) => $schema->components([
+                            ->editOptionForm(fn (Schema $schema) => $schema->components([
                                 TextInput::make('name')
                                     ->required(),
                                 ColorPicker::make('color')
@@ -106,7 +104,7 @@ class ScheduleEntryResource extends Resource
 
                         Select::make('project_id')
                             ->relationship('project', 'name')
-                            ->default(Project::where('path', config('app.default_project'))->firstOrFail()->id)
+                            ->default(fn () => Project::where('path', config('app.default_project'))->first()?->id)
                             ->live(),
 
                         TextInput::make('external_id')
@@ -119,14 +117,14 @@ class ScheduleEntryResource extends Resource
                             DateTimePicker::make('starts_at')
                                 ->native(true)
                                 ->reactive()
-                                ->maxDate(fn(Get $get) => $get('ends_at'))
+                                ->maxDate(fn (Get $get) => $get('ends_at'))
                                 ->required()
                                 ->label('Starts Date'),
 
                             DateTimePicker::make('ends_at')
                                 ->native(true)
                                 ->reactive()
-                                ->minDate(fn(Get $get) => $get('starts_at'))
+                                ->minDate(fn (Get $get) => $get('starts_at'))
                                 ->required()
                                 ->label('Ends Date'),
                         ])->columnSpan(1),
@@ -165,7 +163,7 @@ class ScheduleEntryResource extends Resource
                                     ->label('Automation has already run')
                                     ->helperText('If this is checked the automation will not run again.'),
                             ]),
-                        ])
+                        ]),
                     ]),
                 ]),
                 Group::make()->columnSpan(1)->columns(1)->schema([
@@ -207,13 +205,13 @@ class ScheduleEntryResource extends Resource
 
                     TextEntry::make('created_at')
                         ->label('Created Date')
-                        ->state(fn(
+                        ->state(fn (
                             ?ScheduleEntry $record
                         ): string => $record?->created_at?->diffForHumans() ?? '-'),
 
                     TextEntry::make('updated_at')
                         ->label('Last Modified Date')
-                        ->state(fn(
+                        ->state(fn (
                             ?ScheduleEntry $record
                         ): string => $record?->updated_at?->diffForHumans() ?? '-'),
                 ]),

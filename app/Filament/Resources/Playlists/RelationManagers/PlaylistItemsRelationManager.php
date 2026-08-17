@@ -154,6 +154,10 @@ class PlaylistItemsRelationManager extends RelationManager
                 $item = $item->required();
             }
 
+            if (array_key_exists('default', $field)) {
+                $item = $item->default($field['default']);
+            }
+
             $item = $item->label($field['name'])
                 ->columnSpanFull();
 
@@ -187,7 +191,7 @@ class PlaylistItemsRelationManager extends RelationManager
                         ->toArray()
                 )->selectablePlaceholder(false),
 
-                CheckboxColumn::make('is_active')
+                CheckboxColumn::make('is_active'),
             ])
             ->reorderable('sort')
             ->defaultSort('sort')
@@ -198,13 +202,13 @@ class PlaylistItemsRelationManager extends RelationManager
             ->recordActions([
                 Action::make('Move')->schema([
                     Select::make('playlist_id')
-                        ->relationship('playlist', 'name', fn (Builder $query) => $query->normal())
+                        ->relationship('playlist', 'name', fn (Builder $query) => $query->normal()),
                 ])->action(fn (PlaylistItem $record, array $data) => $record->update([
                     'playlist_id' => $data['playlist_id'],
                 ])),
                 Action::make('Copy to..')->schema([
                     Select::make('playlist_id')
-                        ->relationship('playlist', 'name', fn (Builder $query) => $query->normal())
+                        ->relationship('playlist', 'name', fn (Builder $query) => $query->normal()),
                 ])->action(fn (PlaylistItem $record, array $data) => PlaylistItem::create(array_merge($record->only([
                     'title',
                     'starts_at',
@@ -214,7 +218,7 @@ class PlaylistItemsRelationManager extends RelationManager
                     'layout_id',
                     'is_active',
                     'content',
-                    'sort'
+                    'sort',
                 ]), [
                     'playlist_id' => $data['playlist_id'],
                 ]))),

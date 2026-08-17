@@ -37,7 +37,7 @@ const systemInfo = computed(() => ({
   'Last Ping': formatSince(state.lastPing),
   '# Announcements': state.announcements.length,
   '# Artworks': state.artworks.length,
-  '# Rooms': state.rooms.length,
+  '# Rooms': state.screen.rooms?.length ?? 0,
 }));
 
 const code = [
@@ -63,8 +63,8 @@ const synchroscope = synced(code, 1000);
 </script>
 
 <template>
-  <div class="h-full flex justify-between items-start m-10 gap-10">
-    <table class="text-primary-100 text-5xl">
+  <div class="h-full flex justify-between items-start m-10">
+    <table class="text-primary-100 text-5xl mr-10">
       <thead class="border border-transparent border-b-[32pt] text-6xl">
         <tr v-for="(value, key) in systemInfoHeader">
           <td class="font-semibold pr-6">{{ key }}</td>

@@ -149,11 +149,13 @@ class SystemSeeder extends Seeder
                     'name' => 'Show the hourly forecast chart',
                     'property' => 'showChart',
                     'type' => 'Checkbox',
+                    'default' => true,
                 ],
                 [
                     'name' => 'Show the index breakdown next to the score',
                     'property' => 'showBreakdown',
                     'type' => 'Checkbox',
+                    'default' => true,
                 ],
             ],
         ]);

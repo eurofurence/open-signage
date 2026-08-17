@@ -34,7 +34,6 @@ return new class extends Migration
 
         Schema::table('schedule_entries', function (Blueprint $table) {
             $table->integer('external_id')->nullable()->change();
-            $table->index('external_id');
         });
     }
 };

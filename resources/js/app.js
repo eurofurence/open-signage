@@ -5,16 +5,19 @@ import { createInertiaApp } from '@inertiajs/vue3';
 import { ZiggyVue } from '../../vendor/tightenco/ziggy';
 import * as Sentry from '@sentry/vue';
 import Main from './Main.vue';
+import Timetable from './Timetable.vue';
 
 import.meta.glob(['./Projects/**/Assets/**'], { eager: true, query: '?url', import: 'default' });
-import.meta.glob('./Projects/*/app.css', { eager: true });
+
+const projectStyles = import.meta.glob('./Projects/*/app.css');
+projectStyles[`./Projects/${import.meta.env.VITE_PROJECT_PATH}/app.css`]?.();
 
 const appName = 'Open Signage';
 
 createInertiaApp({
   title: () => appName,
-  resolve: () => {
-    return Main;
+  resolve: name => {
+    return name === 'Timetable' ? Timetable : Main;
   },
   setup({ el, App, props, plugin }) {
     const app = createApp({ render: () => h(App, props) })

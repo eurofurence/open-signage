@@ -55,6 +55,7 @@ export default {
     },
     init() {
       if (this.isSupported && this.source && this.type) {
+        this.teardown();
         const videoElement = this.$refs.flvPlayer;
         this.flvPlayer = flvjs.createPlayer(
           { url: this.source, type: this.type, ...this.mediaDataSource },
@@ -62,6 +63,14 @@ export default {
         );
         this.flvPlayer.attachMediaElement(videoElement);
         this.load();
+      }
+    },
+    teardown() {
+      if (this.flvPlayer) {
+        this.pause();
+        this.unload();
+        this.destroy();
+        this.flvPlayer = null;
       }
     },
     on(event, listener) {
@@ -96,19 +105,8 @@ export default {
   mounted() {
     this.init();
   },
-  beforeCreate() {},
-  beforeMount() {},
-  beforeUpdate() {},
-  updated() {},
-  beforeDestroy() {},
-  destroyed() {
-    if (this.flvPlayer) {
-      this.pause();
-      this.unload();
-      this.destroy();
-      this.flvPlayer = null;
-    }
+  beforeUnmount() {
+    this.teardown();
   },
-  activated() {},
 };
 </script>

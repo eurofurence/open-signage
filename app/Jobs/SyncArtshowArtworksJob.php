@@ -6,10 +6,12 @@ use App\Models\Artwork;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -25,21 +27,31 @@ class SyncArtshowArtworksJob implements ShouldQueue
 
     private const EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
 
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     public function handle(): void
     {
-        $images = $this->fetchImageList();
+        $lock = Cache::lock('sync-artshow-artworks', 600);
 
-        if (is_null($images)) {
+        if (! $lock->get()) {
+            Log::info('Art show sync skipped, another sync is still running.');
+
             return;
         }
 
-        $images->each(fn(array $image) => $this->syncImage($image['url'], $image['checksum']));
+        try {
+            $images = $this->fetchImageList();
 
-        $this->removeVanishedArtworks($images->keys()->all());
+            if (is_null($images)) {
+                return;
+            }
+
+            $images->each(fn (array $image) => $this->syncImage($image['url'], $image['checksum']));
+
+            $this->removeVanishedArtworks($images->keys()->all());
+        } finally {
+            $lock->release();
+        }
     }
 
     private function fetchImageList(): ?Collection
@@ -52,7 +64,13 @@ class SyncArtshowArtworksJob implements ShouldQueue
             return null;
         }
 
-        $response = Http::timeout((int) config('services.artshow.timeout'))->get($imagesUrl);
+        try {
+            $response = Http::timeout((int) config('services.artshow.timeout'))->get($imagesUrl);
+        } catch (ConnectionException $exception) {
+            Log::warning("Art show sync failed, {$imagesUrl} was unreachable: {$exception->getMessage()}");
+
+            return null;
+        }
 
         if ($response->failed()) {
             Log::warning("Art show sync failed, {$imagesUrl} responded with {$response->status()}.");
@@ -62,14 +80,14 @@ class SyncArtshowArtworksJob implements ShouldQueue
 
         $images = $response->json('images');
 
-        if (!is_array($images)) {
+        if (! is_array($images)) {
             Log::warning("Art show sync failed, {$imagesUrl} did not return an image list.");
 
             return null;
         }
 
         return collect($images)
-            ->filter(fn($image) => is_array($image) && filled($image['url'] ?? null) && filled($image['checksum'] ?? null))
+            ->filter(fn ($image) => is_array($image) && filled($image['url'] ?? null) && filled($image['checksum'] ?? null))
             ->keyBy('url');
     }
 
@@ -81,7 +99,13 @@ class SyncArtshowArtworksJob implements ShouldQueue
             return;
         }
 
-        $response = Http::timeout((int) config('services.artshow.timeout'))->get($url);
+        try {
+            $response = Http::timeout((int) config('services.artshow.timeout'))->get($url);
+        } catch (ConnectionException $exception) {
+            Log::warning("Art show sync could not download {$url}: {$exception->getMessage()}");
+
+            return;
+        }
 
         if ($response->failed()) {
             Log::warning("Art show sync could not download {$url}, responded with {$response->status()}.");
@@ -127,8 +151,8 @@ class SyncArtshowArtworksJob implements ShouldQueue
         }
 
         collect($replacedFiles)
-            ->reject(fn(string $file) => $file === $path)
-            ->each(fn(string $file) => $this->deleteFile($file));
+            ->reject(fn (string $file) => $file === $path)
+            ->each(fn (string $file) => $this->deleteFile($file));
     }
 
     private function removeVanishedArtworks(array $knownUrls): void
@@ -137,8 +161,9 @@ class SyncArtshowArtworksJob implements ShouldQueue
             ->whereNotIn('external_url', $knownUrls)
             ->get()
             ->each(function (Artwork $artwork) {
-                collect($artwork->files())->each(fn(string $file) => $this->deleteFile($file));
+                $files = $artwork->files();
                 $artwork->delete();
+                collect($files)->each(fn (string $file) => $this->deleteFile($file));
             });
     }
 
@@ -146,11 +171,11 @@ class SyncArtshowArtworksJob implements ShouldQueue
     {
         $files = $artwork->files();
 
-        if (empty($files) || collect($files)->contains(fn(string $file) => !Storage::exists($file))) {
+        if (empty($files) || collect($files)->contains(fn (string $file) => ! Storage::exists($file))) {
             return false;
         }
 
-        if (collect($files)->contains(fn(string $file) => !Storage::exists($file . '.webp'))) {
+        if (collect($files)->contains(fn (string $file) => ! Storage::exists($file . '.webp'))) {
             Artisan::call('images:convert', ['artworkId' => $artwork->id]);
         }
 

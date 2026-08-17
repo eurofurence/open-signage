@@ -1,7 +1,6 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref, toRaw } from 'vue';
 import { DateTime } from 'luxon';
-import _ from 'lodash';
 import truncate from '@/truncate.js';
 
 const props = defineProps({
@@ -35,45 +34,42 @@ const currentTime = ref(DateTime.now());
 const currentPageIndex = ref(0);
 
 function getNextEventForRoom(room, timeObject) {
-  return _.cloneDeep(props.schedule)
-    .filter(event => {
-      return event.room_id === room.id;
-    })
-    .filter(event => {
-      return (
-        timeObject <=
-          DateTime.fromISO(event.ends_at).plus({
-            minutes: event.delay,
-          }) && !event.title.toLowerCase().includes('seating')
-      );
-    })
-    .map(event => {
-      const eventCopy = toRaw(event);
-      eventCopy.title = eventCopy.title
-        ? eventCopy.title
-            .replace("Dealers' Den & Art Show", '')
-            .replace("Dealers' Den", '')
-            .replace('Art Show', '')
-            .replace('Fursuit Badge', '')
-            .replace('Registration', '')
-            .replace('Constore', '')
-            .replace('Fursuit Badge', '')
-            .replace('Fursuit Lounge', '')
-            .replace("Artists' Lounge", '')
-            .replace('Locker Service', '')
-            .replace('The Electric Lounge Sessions', '')
-            .replace(/^[\W]+/g, '')
-        : eventCopy.title;
-      eventCopy.title = truncate(eventCopy.title.split(' – ')[0], 30, true);
-      return eventCopy; //event.title.replace(room.name);
-    })
-    .shift();
+  const event = props.schedule.find(entry => {
+    return (
+      entry.room_id === room.id &&
+      timeObject <=
+        DateTime.fromISO(entry.ends_at).plus({
+          minutes: entry.delay,
+        }) &&
+      !(entry.title ?? '').toLowerCase().includes('seating')
+    );
+  });
+
+  if (!event) return undefined;
+
+  const eventCopy = { ...toRaw(event) };
+  eventCopy.title = eventCopy.title
+    ? eventCopy.title
+        .replace("Dealers' Den & Art Show", '')
+        .replace("Dealers' Den", '')
+        .replace('Art Show', '')
+        .replace('Fursuit Badge', '')
+        .replace('Registration', '')
+        .replace('Constore', '')
+        .replace('Fursuit Badge', '')
+        .replace('Fursuit Lounge', '')
+        .replace("Artists' Lounge", '')
+        .replace('Locker Service', '')
+        .replace('The Electric Lounge Sessions', '')
+        .replace(/^[\W]+/g, '')
+    : eventCopy.title;
+  eventCopy.title = truncate((eventCopy.title ?? '').split(' – ')[0], 30, true);
+  return eventCopy;
 }
 
 const populatedRooms = computed(() => {
-  return _.cloneDeep(props.rooms).map(room => {
-    room.nextEvent = getNextEventForRoom(room, currentTime.value);
-    return room;
+  return props.rooms.map(room => {
+    return { ...toRaw(room), nextEvent: getNextEventForRoom(room, currentTime.value) };
   });
 });
 
@@ -90,7 +86,7 @@ const roomPages = computed(() => {
 });
 
 const currentSlide = computed(() => {
-  return roomPages.value[currentPageIndex.value];
+  return roomPages.value[currentPageIndex.value] ?? roomPages.value[0];
 });
 
 onMounted(() => {
@@ -98,7 +94,8 @@ onMounted(() => {
     currentTime.value = DateTime.now();
   }, 5000);
   const pageSwitcher = setInterval(() => {
-    currentPageIndex.value = (currentPageIndex.value + 1) % roomPages.value.length;
+    const pageCount = roomPages.value.length;
+    currentPageIndex.value = pageCount === 0 ? 0 : (currentPageIndex.value + 1) % pageCount;
   }, props.pageSwitchingTimer);
   onUnmounted(() => {
     clearInterval(interval);

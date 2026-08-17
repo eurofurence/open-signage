@@ -39,7 +39,7 @@ class ArtshowArtworkSyncTest extends TestCase
 
         Storage::fake('public');
         Event::fake([UpdateArtworkEvent::class]);
-        Http::fake(fn(Request $request) => $this->respond($request));
+        Http::fake(fn (Request $request) => $this->respond($request));
     }
 
     public function test_it_imports_artworks_and_detects_their_orientation()
@@ -163,13 +163,13 @@ class ArtshowArtworkSyncTest extends TestCase
 
             return Http::response([
                 'images' => collect($this->images)
-                    ->map(fn(string $contents, string $url) => ['url' => $url, 'checksum' => hash('sha256', $contents)])
+                    ->map(fn (string $contents, string $url) => ['url' => $url, 'checksum' => hash('sha256', $contents)])
                     ->values()
                     ->all(),
             ]);
         }
 
-        if (!array_key_exists($request->url(), $this->images)) {
+        if (! array_key_exists($request->url(), $this->images)) {
             return Http::response('', 404);
         }
 
@@ -180,6 +180,6 @@ class ArtshowArtworkSyncTest extends TestCase
     {
         return (string) Image::create($width, $height)
             ->fill($width > $height ? '#ff0000' : '#0000ff')
-            ->encode(new JpegEncoder());
+            ->encode(new JpegEncoder);
     }
 }
