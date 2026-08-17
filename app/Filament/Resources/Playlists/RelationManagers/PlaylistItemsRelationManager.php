@@ -133,7 +133,7 @@ class PlaylistItemsRelationManager extends RelationManager
             } elseif ($field['type'] === 'FileInput') {
                 $item = FileUpload::make('content.' . $field['property'])
                     ->visibility('public')
-                    ->acceptedFileTypes(['video/mp4']);
+                    ->acceptedFileTypes(['video/mp4', 'video/webm']);
             } else {
                 $class = 'Filament\\Forms\\Components\\' . $field['type'];
 
