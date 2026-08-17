@@ -218,7 +218,10 @@ function onLeave(node, done) {
               </div>
             </div>
             <div class="relative flex flex-row flex-nowrap">
-              <div v-if="item.delay" class="relative flex flex-row flex-nowrap text-justify align-top text-[2vw] subtext">
+              <div
+                v-if="item.delay"
+                class="relative flex flex-row flex-nowrap text-justify align-top text-[2vw] subtext"
+              >
                 <div v-if="item.delay < 15" class="flex text-left" style="color: #f8d032 !important">
                   Slightly Delayed
                 </div>
