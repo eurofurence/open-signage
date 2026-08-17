@@ -3,6 +3,7 @@
 namespace App\Events;
 
 use App\Models\Artwork;
+use App\Services\ScreenDataGenerator;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
@@ -33,6 +34,6 @@ class UpdateArtworkEvent implements ShouldBroadcast
 
     public function broadcastWith(): array
     {
-        return $this->artwork->toArray();
+        return ScreenDataGenerator::artwork($this->artwork);
     }
 }

@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\Artworks\Pages;
 
+use App\Jobs\SyncArtshowArtworksJob;
+use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use App\Filament\Resources\Artworks\ArtworkResource;
 use Filament\Actions;
@@ -15,6 +17,12 @@ class ListArtworks extends ListRecords
     {
         return [
             CreateAction::make(),
+            Action::make('syncArtshow')
+                ->icon('heroicon-o-arrow-path')
+                ->label('Sync Art Show')
+                ->action(function () {
+                    SyncArtshowArtworksJob::dispatchSync();
+                })
         ];
     }
 }

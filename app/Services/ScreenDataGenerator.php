@@ -62,14 +62,19 @@ class ScreenDataGenerator
 
     public static function artworks(): array
     {
-        return Artwork::all()->map(fn(Artwork $artwork) => [
+        return Artwork::all()->map(fn(Artwork $artwork) => self::artwork($artwork))->toArray();
+    }
+
+    public static function artwork(Artwork $artwork): array
+    {
+        return [
             'id' => $artwork->id,
             'name' => $artwork->name,
             'artist' => $artwork->artist,
             'horizontal' => (empty($artwork->file_horizontal)) ? null : Storage::url($artwork->file_horizontal),
             'vertical' => (empty($artwork->file_vertical)) ? null : Storage::url($artwork->file_vertical),
             'banner' => (empty($artwork->file_banner)) ? null : Storage::url($artwork->file_banner),
-        ])->toArray();
+        ];
     }
 
     public static function schedule(): array

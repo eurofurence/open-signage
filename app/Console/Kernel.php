@@ -3,6 +3,7 @@
 namespace App\Console;
 
 use App\Jobs\ScreenStatusCheckJob;
+use App\Jobs\SyncArtshowArtworksJob;
 use App\Jobs\SyncEurofurenceScheduleJob;
 use App\Jobs\ScheduleEntryDispatcherJob;
 use Illuminate\Console\Scheduling\Schedule;
@@ -21,6 +22,10 @@ class Kernel extends ConsoleKernel
 
         if (config('app.default_project') === "EF30") {
             $schedule->job(new SyncEurofurenceScheduleJob())->everyMinute();
+        }
+
+        if (config('services.artshow.enabled')) {
+            $schedule->job(new SyncArtshowArtworksJob())->everyFiveMinutes()->withoutOverlapping();
         }
     }
 

@@ -5,8 +5,10 @@ namespace App\Filament\Resources\Artworks;
 use Filament\Schemas\Schema;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\FileUpload;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Actions\EditAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -40,13 +42,17 @@ class ArtworkResource extends Resource
                     ->image()
                     ->imageEditor()
                     ->imageEditorAspectRatios(['16:9', null])
-                    ->imageEditorMode(2),
+                    ->imageEditorMode(2)
+                    ->disabled(fn(?Artwork $record) => (bool) $record?->managed)
+                    ->helperText(fn(?Artwork $record) => $record?->managed ? 'Managed by the art show sync.' : null),
                 FileUpload::make('file_vertical')
                     ->visibility('public')
                     ->image()
                     ->imageEditor()
                     ->imageEditorAspectRatios(['9:16', null])
-                    ->imageEditorMode(2),
+                    ->imageEditorMode(2)
+                    ->disabled(fn(?Artwork $record) => (bool) $record?->managed)
+                    ->helperText(fn(?Artwork $record) => $record?->managed ? 'Managed by the art show sync.' : null),
                 FileUpload::make('file_banner')
                     ->visibility('public')
                     ->image()
@@ -63,14 +69,26 @@ class ArtworkResource extends Resource
             ->columns([
                 TextColumn::make('name'),
                 TextColumn::make('artist'),
+                IconColumn::make('managed')
+                    ->label('Art Show')
+                    ->boolean(),
                 ImageColumn::make('file_horizontal')
+                    ->visibility('public')
+                    ->imageHeight(100)
+                    ->grow(false)
+                    ->disabled(),
+                ImageColumn::make('file_vertical')
                     ->visibility('public')
                     ->imageHeight(100)
                     ->grow(false)
                     ->disabled(),
             ])
             ->filters([
-                //
+                TernaryFilter::make('managed')
+                    ->label('Art Show')
+                    ->placeholder('All artworks')
+                    ->trueLabel('Managed by the art show')
+                    ->falseLabel('Uploaded manually'),
             ])
             ->recordActions([
                 EditAction::make(),

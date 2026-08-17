@@ -32,8 +32,8 @@ return [
     ],
 
     'telegram-bot-api' => [
-        'token' => env('TELEGRAM_BOT_TOKEN',null),
-        'chat_id' => env('TELEGRAM_CHAT_ID',null),
+        'token' => env('TELEGRAM_BOT_TOKEN', null),
+        'chat_id' => env('TELEGRAM_CHAT_ID', null),
     ],
 
     'identity' => [
@@ -48,7 +48,12 @@ return [
     ],
 
     'pretalx' => [
-        'domain' => env('PRETALX_DOMAIN', "cfp.eurofurence.org"),
+        'domain' => env('PRETALX_DOMAIN', 'cfp.eurofurence.org'),
         'schedule' => env('PRETALX_SCHEDULE'),
-    ]
+    ],
+    'artshow' => [
+        'enabled' => env('ARTSHOW_SYNC_ENABLED', false),
+        'images' => env('ARTSHOW_IMAGES_URL', 'https://artshow.eurofurence.org/signage/images.json'),
+        'timeout' => env('ARTSHOW_TIMEOUT', 30),
+    ],
 ];
