@@ -15,7 +15,7 @@ defineProps({
   <div class="fullscreen-image h-screen w-screen flex justify-center items-center">
     <img
       :src="image"
-      :class="{ 'object-cover h-full w-full': cover, 'max-h-screen max-w-screen': !cover }"
+      :class="{ 'object-cover h-full w-full': cover, 'max-h-screen max-w-full': !cover }"
       alt="Full Screen Image"
     />
   </div>

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\Playlist;
+use App\Models\PlaylistItem;
 
 class PlaylistController extends Controller
 {
@@ -14,8 +15,11 @@ class PlaylistController extends Controller
             ->with(['playlistItems', 'playlistItems.page', 'playlistItems.layout'])
             ->first();
 
-        $playlist->playlistItems->each(fn($item) => $item->page->makeHidden(['schema']));
-
-        return $playlist->toArray();
+        return array_replace($playlist->toArray(), [
+            'playlist_items' => $playlist->playlistItems
+                ->map(fn (PlaylistItem $item) => $item->toScreenArray())
+                ->values()
+                ->toArray(),
+        ]);
     }
 }

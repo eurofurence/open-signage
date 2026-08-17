@@ -56,6 +56,14 @@ class PlaylistItem extends Model
         $query->where('is_active', true);
     }
 
+    public function toScreenArray(): array
+    {
+        $this->loadMissing(['page', 'layout']);
+        $this->page?->makeHidden(['schema']);
+
+        return array_replace($this->toArray(), ['content' => $this->parsedContent()]);
+    }
+
     public function parsedContent(): array
     {
         $schema = collect($this->page->schema);

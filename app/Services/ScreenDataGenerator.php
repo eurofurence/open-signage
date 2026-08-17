@@ -52,11 +52,12 @@ class ScreenDataGenerator
         $playlist = $screen->playlist()->first()
             ->loadMissing('playlistItems', 'playlistItems.page', 'playlistItems.layout');
 
-        $playlist->playlistItems->each(function ($playlistItem) {
-            $playlistItem->page->makeHidden(['schema']);
-        });
-
-        return $playlist->toArray();
+        return array_replace($playlist->toArray(), [
+            'playlist_items' => $playlist->playlistItems
+                ->map(fn(PlaylistItem $playlistItem) => $playlistItem->toScreenArray())
+                ->values()
+                ->toArray(),
+        ]);
     }
 
     public static function artworks(): array

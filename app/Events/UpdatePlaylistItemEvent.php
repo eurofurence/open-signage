@@ -32,9 +32,7 @@ class UpdatePlaylistItemEvent implements ShouldBroadcast
     public function broadcastWith(): array
     {
         $playlistItem = $this->playlistItem;
-        $playlistItem->loadMissing(['page', 'layout']);
         $playlistItem->makeHidden(['playlist']);
-        $playlistItem->page->makeHidden(['schema']);
-        return $playlistItem->toArray();
+        return $playlistItem->toScreenArray();
     }
 }
