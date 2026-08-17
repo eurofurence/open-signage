@@ -1,8 +1,13 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useAppState } from '@/state.js';
+import { useScreenOrientation } from '@/screenOrientation.js';
 
 const props = defineProps({
+  appScreen: {
+    type: Object,
+    default: null,
+  },
   hoursAhead: {
     type: [Number, String],
     default: null,
@@ -140,14 +145,21 @@ function contiguous(series) {
   return filled;
 }
 
-function iconStep(count) {
-  if (count <= 14) return 1;
-  if (count <= 28) return 2;
+function steps(count, portrait) {
+  const crowding = portrait ? count * 2 : count;
+  const room = { dense: crowding > 40, values: crowding <= 64 };
 
-  return 3;
+  if (crowding <= 14) return { ...room, icons: 1, labels: 1 };
+  if (crowding <= 20) return { ...room, icons: 2, labels: 1 };
+  if (crowding <= 28) return { ...room, icons: 2, labels: 2 };
+  if (crowding <= 40) return { ...room, icons: 3, labels: 2 };
+  if (crowding <= 64) return { ...room, icons: 4, labels: 4 };
+
+  return { ...room, icons: 6, labels: 6 };
 }
 
 const state = useAppState();
+const { isPortrait } = useScreenOrientation(() => props.appScreen);
 
 const hoursAheadValue = computed(() => positiveNumber(props.hoursAhead, 24));
 const pastHoursValue = computed(() => positiveNumber(props.pastHours, 4));
@@ -232,14 +244,16 @@ const hours = computed(() => {
   return padded.slice(Math.max(0, first - pastHoursValue.value), first + hoursAheadValue.value);
 });
 
+const chart = computed(() => steps(hours.value.length, isPortrait.value));
+
 const columns = computed(() => {
-  const icons = iconStep(hours.value.length);
-  const labels = hours.value.length > 18 ? 2 : 1;
+  const { icons, labels, values } = chart.value;
 
   return hours.value.map((entry, index) => {
     const start = hourStart(entry.time);
     const missing = entry.score === null || entry.score === undefined;
     const label = clockOf(start);
+    const hour = parseInt(label.slice(0, 2), 10);
     const color = entry.color || FALLBACK_COLOR;
 
     return {
@@ -250,9 +264,9 @@ const columns = computed(() => {
       color,
       ink: contrastText(color),
       inside: !missing && entry.score >= 2.5,
-      value: missing ? '' : entry.score.toFixed(1),
+      value: missing || !values ? '' : entry.score.toFixed(1),
       icon: index % icons === 0 ? entry.icon || entry.weather?.icon || '' : '',
-      label: parseInt(label.slice(0, 2), 10) % labels === 0 ? label : '',
+      label: hour % labels === 0 ? label : '',
     };
   });
 });
@@ -312,7 +326,7 @@ function windowText(mark, word, window, covered) {
   const start = window?.start ? clockOf(window.start) : '';
   const end = window?.end ? clockOf(window.end) : '';
 
-  if (covered >= 6 && start && end) return `${mark} ${word} ${start} – ${end}`;
+  if (covered >= 6 && start && end) return `${mark} ${word} ${start}\u00a0–\u00a0${end}`;
   if (covered >= 3) return `${mark} ${word}`;
 
   return mark;
@@ -362,7 +376,7 @@ const warningBands = computed(() => {
         ink: entry.warning.advance ? LIGHT_INK : contrastText(color),
         left: entry.span.left,
         width: entry.span.width,
-        text: entry.span.covered >= 3 ? `⚠ ${name}` : '⚠',
+        text: entry.span.covered >= (isPortrait.value ? 6 : 3) ? `⚠ ${name}` : '⚠',
       };
     });
 });
@@ -461,14 +475,14 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="wx-board">
+  <div class="wx-board" :class="{ 'is-portrait': isPortrait, 'is-dense': chart.dense }">
     <p v-if="!summary" class="wx-boot">
       <span v-if="loadError">Could not load weather data: {{ loadError }}. Retrying…</span>
       <span v-else>Loading weather data…</span>
     </p>
 
     <template v-else>
-      <header class="wx-bar">
+      <header class="wx-strip">
         <div class="wx-place">
           <span class="wx-event">{{ eventName }}</span>
           <span class="wx-what">Weather</span>
@@ -534,9 +548,11 @@ onMounted(() => {
             >
               <span class="wx-icon">{{ column.icon }}</span>
               <span class="wx-bar-area">
-                <b v-if="!column.inside" class="wx-value is-outside">{{ column.value }}</b>
+                <b v-if="column.value && !column.inside" class="wx-value is-outside">{{ column.value }}</b>
                 <span class="wx-bar" :style="{ height: column.height, backgroundColor: column.color }">
-                  <b v-if="column.inside" class="wx-value" :style="{ color: column.ink }">{{ column.value }}</b>
+                  <b v-if="column.value && column.inside" class="wx-value" :style="{ color: column.ink }">{{
+                    column.value
+                  }}</b>
                 </span>
               </span>
               <span class="wx-hour-label">{{ column.label }}</span>
@@ -569,7 +585,7 @@ onMounted(() => {
         </div>
       </section>
 
-      <footer class="wx-bar wx-foot">
+      <footer class="wx-strip wx-foot">
         <span :class="{ 'is-stale': isStale }">{{ observedAt }}</span>
         <span>{{ attribution }}</span>
       </footer>
@@ -613,7 +629,7 @@ onMounted(() => {
   font-size: 2.4vh;
 }
 
-.wx-bar {
+.wx-strip {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -646,16 +662,23 @@ onMounted(() => {
 }
 
 .wx-clock {
+  flex: 0 0 auto;
+  margin-left: 1vw;
   color: var(--wx-cyan);
   font-size: 3.4vh;
   font-weight: bold;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .wx-foot {
   margin-top: 0.8vh;
   color: var(--wx-muted);
   font-size: 1.6vh;
+}
+
+.wx-foot > span + span {
+  margin-left: 2vw;
 }
 
 .wx-foot .is-stale {
@@ -848,6 +871,9 @@ onMounted(() => {
 .wx-range {
   position: absolute;
   top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   height: 100%;
   padding: 0 0.4vw;
   overflow: hidden;
@@ -855,10 +881,8 @@ onMounted(() => {
   color: var(--wx-inset);
   font-size: 1.5vh;
   font-weight: bold;
-  line-height: 3.2vh;
-  white-space: nowrap;
+  line-height: 1.15;
   text-align: center;
-  text-overflow: ellipsis;
 }
 
 .wx-warn-band.is-advance {
@@ -878,7 +902,6 @@ onMounted(() => {
 
 .wx-range.is-bad {
   background: var(--wx-pink);
-  color: var(--wx-text);
 }
 
 .wx-hours {
@@ -949,13 +972,24 @@ onMounted(() => {
 .wx-hour-label {
   flex: 0 0 auto;
   height: 2.6vh;
-  overflow: hidden;
+  margin: 0 -1.4em;
   color: var(--wx-muted);
   font-size: 1.7vh;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   line-height: 2.6vh;
+  white-space: nowrap;
   text-align: center;
+}
+
+.wx-hour:first-of-type .wx-hour-label {
+  margin-left: 0;
+  text-align: left;
+}
+
+.wx-hour:last-of-type .wx-hour-label {
+  margin-right: 0;
+  text-align: right;
 }
 
 .wx-now {
@@ -1017,32 +1051,49 @@ onMounted(() => {
   font-variant-numeric: tabular-nums;
 }
 
-@media (orientation: portrait) {
-  .wx-score-row {
-    flex-wrap: wrap;
-  }
+.is-portrait .wx-score-row {
+  flex-wrap: wrap;
+}
 
-  .wx-score-number {
-    font-size: 8vh;
-  }
+.is-portrait .wx-score-number {
+  font-size: 8vh;
+}
 
-  .wx-band {
-    font-size: 3.4vh;
-  }
+.is-portrait .wx-band {
+  font-size: 3.4vh;
+}
 
-  .wx-breakdown {
-    flex: 1 0 100%;
-    margin-top: 1vh;
-    margin-left: 0;
-  }
+.is-portrait .wx-breakdown {
+  flex: 1 0 100%;
+  margin-top: 1vh;
+  margin-left: 0;
+}
 
-  .wx-part-key {
-    flex: 0 0 22vw;
-  }
+.is-portrait .wx-part-key {
+  flex: 0 0 22vw;
+}
 
-  .wx-item {
-    flex: 0 0 33%;
-    padding-bottom: 0.8vh;
-  }
+.is-portrait .wx-item {
+  flex: 0 0 33%;
+  padding-bottom: 0.8vh;
+}
+
+.is-portrait .wx-track-row {
+  height: 4.4vh;
+}
+
+.is-portrait.is-dense .wx-value {
+  padding-top: 0.3vh;
+  font-size: 1.15vh;
+}
+
+.is-portrait .wx-foot {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.is-portrait .wx-foot > span + span {
+  margin-top: 0.2vh;
+  margin-left: 0;
 }
 </style>
