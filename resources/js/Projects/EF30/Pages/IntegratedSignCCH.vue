@@ -2,6 +2,8 @@
 import { computed, onMounted, onUnmounted, ref, toRaw } from 'vue';
 import { DateTime } from 'luxon';
 import truncate from '@/truncate.js';
+import chunkArray from '@/chunkArray.js';
+import { useScreenOrientation } from '@/screenOrientation.js';
 
 const props = defineProps({
   title: {
@@ -20,6 +22,10 @@ const props = defineProps({
     type: Object,
     default: [],
   },
+  appScreen: {
+    type: Object,
+    default: null,
+  },
   pageSwitchingTimer: {
     type: Number,
     default: 15000,
@@ -32,6 +38,8 @@ const props = defineProps({
 
 const currentTime = ref(DateTime.now());
 const currentPageIndex = ref(0);
+
+const { isPortrait } = useScreenOrientation(() => props.appScreen);
 
 function getNextEventForRoom(room, timeObject) {
   const event = props.schedule.find(entry => {
@@ -73,16 +81,10 @@ const populatedRooms = computed(() => {
   });
 });
 
-function chunkArray(array, chunkSize) {
-  const result = [];
-  for (let i = 0; i < array.length; i += chunkSize) {
-    result.push(array.slice(i, i + chunkSize));
-  }
-  return result;
-}
+const roomsPerPage = computed(() => (isPortrait.value ? 5 : 3));
 
 const roomPages = computed(() => {
-  return chunkArray(populatedRooms.value, 3);
+  return chunkArray(populatedRooms.value, roomsPerPage.value);
 });
 
 const currentSlide = computed(() => {
@@ -123,7 +125,8 @@ function onLeave(node, done) {
     <Transition appear @enter="onEnter" @leave="onLeave" :css="false">
       <div
         :key="currentPageIndex"
-        class="flex flex-col absolute z-30 h-[100vh] w-[100vw] p-16 space-y-8 justify-items-center overflow-hidden"
+        class="flex flex-col absolute z-30 h-[100vh] w-[100vw] space-y-8 justify-items-center overflow-hidden"
+        :class="isPortrait ? 'p-10 justify-around' : 'p-16'"
       >
         <!--                <TransitionGroup name="list">-->
         <div
@@ -132,11 +135,14 @@ function onLeave(node, done) {
           class="flex flex-col text-white magic-text anim"
           :class="[isThemeFont ? 'theme-font' : 'theme-font-secondary']"
         >
-          <div class="flex text-[9vw] text-justify">
+          <div
+            class="flex"
+            :class="isPortrait ? 'text-left text-[5.5vw] leading-tight break-words' : 'text-justify text-[9vw]'"
+          >
             {{ item.name }}
           </div>
 
-          <div class="flex flex-row text-[4vw] items-baseline">
+          <div class="flex flex-row items-baseline" :class="isPortrait ? 'text-[2.8vw]' : 'text-[4vw]'">
             <div v-if="item.nextEvent" class="flex flex-row items-baseline">
               <div
                 v-if="item.nextEvent && DateTime.fromISO(item.nextEvent.starts_at) < DateTime.local()"
@@ -151,11 +157,16 @@ function onLeave(node, done) {
               v-if="
                 item.nextEvent && DateTime.fromISO(item.nextEvent.starts_at) < DateTime.local() && item.nextEvent.title
               "
-              class="flex text-left pl-16"
+              class="flex text-left"
+              :class="isPortrait ? 'pl-8' : 'pl-16'"
             >
               {{ item.nextEvent.title }}
             </div>
-            <div v-else-if="item.nextEvent && item.nextEvent.title" class="flex text-left pl-16">
+            <div
+              v-else-if="item.nextEvent && item.nextEvent.title"
+              class="flex text-left"
+              :class="isPortrait ? 'pl-8' : 'pl-16'"
+            >
               Next: {{ item.nextEvent.title }}
             </div>
           </div>

@@ -4,6 +4,7 @@ import { DateTime } from 'luxon';
 import HourTime from '@/Components/HourTime.vue';
 import _ from 'lodash';
 import truncate from '@/truncate.js';
+import { useScreenOrientation } from '@/screenOrientation.js';
 
 const props = defineProps({
   appScreen: {
@@ -21,6 +22,8 @@ const props = defineProps({
 });
 
 const currentTime = ref(DateTime.now());
+
+const { isPortrait } = useScreenOrientation(() => props.appScreen);
 
 onMounted(() => {
   const interval = setInterval(() => {
@@ -69,14 +72,15 @@ const nextEvent = computed(() => {
     >
       <div
         v-if="nextEvent.room.name !== nextEvent.title && showRoomName"
-        class="text-[10vw] leading-none font-bold text-center neonTubeColor heading-font"
+        class="leading-none font-bold text-center neonTubeColor heading-font"
+        :class="isPortrait ? 'text-[6vh]' : 'text-[10vw]'"
       >
         {{ nextEvent.room.name }}
       </div>
-      <div class="text-[6vw] leading-[1.2] font-bold text-center">
+      <div class="leading-[1.2] font-bold text-center" :class="isPortrait ? 'text-[4vh]' : 'text-[6vw]'">
         {{ truncate(nextEvent.title, 90) }}
       </div>
-      <div class="mb-2 whitespace-nowrap text-5xl text-center text-[9vw] leading-none">
+      <div class="mb-2 whitespace-nowrap text-center leading-none" :class="isPortrait ? 'text-[5vh]' : 'text-[9vw]'">
         <div
           v-if="
             getDayDescription(
@@ -85,7 +89,8 @@ const nextEvent = computed(() => {
               }),
             )
           "
-          class="text-[6vw] leading-none"
+          class="leading-none"
+          :class="isPortrait ? 'text-[4.5vh]' : 'text-[6vw]'"
         >
           {{
             getDayDescription(
@@ -95,12 +100,16 @@ const nextEvent = computed(() => {
             )
           }}
         </div>
-        <div class="text-[6vw] leading-none">
+        <div class="leading-none" :class="isPortrait ? 'text-[4.5vh]' : 'text-[6vw]'">
           <HourTime :time="DateTime.fromISO(nextEvent.starts_at)" />
           -
           <HourTime :time="DateTime.fromISO(nextEvent.ends_at)" />
         </div>
-        <div v-if="nextEvent.delay > 0" class="text-[6vw] leading-none text-center">
+        <div
+          v-if="nextEvent.delay > 0"
+          class="leading-none text-center text-wrap"
+          :class="isPortrait ? 'text-[4.5vh]' : 'text-[6vw]'"
+        >
           Delayed by
           <span class="text-red-300">{{ nextEvent.delay }}</span>
           minutes

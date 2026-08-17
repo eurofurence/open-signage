@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue';
+import { useScreenOrientation } from '@/screenOrientation.js';
 
 const props = defineProps({
   appScreen: {
@@ -8,17 +9,9 @@ const props = defineProps({
   },
 });
 
-const portraitOrientations = ['left', 'right'];
+const { isPortrait } = useScreenOrientation(() => props.appScreen);
 
-const orientationClass = computed(() => {
-  const orientation = props.appScreen?.orientation;
-
-  if (!orientation || orientation === 'normal') {
-    return null;
-  }
-
-  return portraitOrientations.includes(orientation) ? 'stage-portrait' : 'stage-landscape';
-});
+const orientationClass = computed(() => (isPortrait.value ? 'stage-portrait' : 'stage-landscape'));
 </script>
 
 <template>
@@ -40,20 +33,7 @@ const orientationClass = computed(() => {
 </template>
 
 <style scoped>
-.stage {
-  --frame-width: 110vw;
-  --frame-min-width: 196vh;
-  --frame-rotate: none;
-}
-
-@media (orientation: portrait) {
-  .stage {
-    --frame-width: 110vh;
-    --frame-min-width: 196vw;
-    --frame-rotate: rotate(90deg);
-  }
-}
-
+.stage,
 .stage.stage-landscape {
   --frame-width: 110vw;
   --frame-min-width: 196vh;

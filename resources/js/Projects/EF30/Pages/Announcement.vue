@@ -1,5 +1,11 @@
 <script setup>
-defineProps({
+import { useScreenOrientation } from '@/screenOrientation.js';
+
+const props = defineProps({
+  appScreen: {
+    type: Object,
+    default: null,
+  },
   title: {
     type: String,
     default: 'Announcement',
@@ -25,6 +31,8 @@ defineProps({
     default: false,
   },
 });
+
+const { isPortrait } = useScreenOrientation(() => props.appScreen);
 </script>
 
 <template>
@@ -32,11 +40,22 @@ defineProps({
     class="h-full flex flex-col justify-center items-center z-50 bgImage bg-no-repeat bg-cover bg-center text-primary-200"
     :class="{ 'text-center': centerContent }"
   >
-    <div class="p-16" :class="{ 'bg-white bg-opacity-80 max-w-7xl mx-auto min-h-full': useContainer }">
-      <h1 class="theme-font text-[128pt] mb-12 text-center" :class="headerSize">{{ title }}</h1>
+    <div
+      :class="[
+        isPortrait ? 'p-8 w-full' : 'p-16',
+        { 'bg-white bg-opacity-80 mx-auto min-h-full': useContainer },
+        { 'max-w-7xl': useContainer && !isPortrait },
+      ]"
+    >
+      <h1
+        class="theme-font text-center break-words"
+        :class="isPortrait ? 'text-[8vw] mb-8' : ['text-[128pt] mb-12', headerSize]"
+      >
+        {{ title }}
+      </h1>
       <div
-        class="font-semibold theme-font-secondary leading-normal mx-auto whitespace-pre-wrap text-[88pt] text-center"
-        :class="textSize"
+        class="font-semibold theme-font-secondary leading-normal mx-auto whitespace-pre-wrap text-center break-words"
+        :class="isPortrait ? 'text-[5vw]' : ['text-[88pt]', textSize]"
       >
         <div class="textscreen" v-html="text"></div>
       </div>

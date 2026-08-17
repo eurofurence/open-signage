@@ -4,11 +4,16 @@ import { DateTime } from 'luxon';
 import _ from 'lodash';
 import chunkArray from '@/chunkArray.js';
 import truncate from '@/truncate.js';
+import { useScreenOrientation } from '@/screenOrientation.js';
 
 const props = defineProps({
   title: {
     type: String,
     default: 'Event Rooms',
+  },
+  appScreen: {
+    type: Object,
+    default: null,
   },
   schedule: {
     type: Array,
@@ -30,6 +35,8 @@ const props = defineProps({
 
 const currentTime = ref(DateTime.now());
 const currentPageIndex = ref(0);
+
+const { isPortrait } = useScreenOrientation(() => props.appScreen);
 
 const lookaheadHours = computed(() => Number(props.lookaheadHours) || 12);
 const pageSwitchingTimer = computed(() => Number(props.pageSwitchingTimer) || 15000);
@@ -75,8 +82,10 @@ const filteredEvents = computed(() => {
     });
 });
 
+const entriesPerPage = computed(() => (isPortrait.value ? 6 : 3));
+
 const schedulePages = computed(() => {
-  return chunkArray(filteredEvents.value, 3);
+  return chunkArray(filteredEvents.value, entriesPerPage.value);
 });
 
 const currentSlide = computed(() => {
@@ -103,22 +112,24 @@ function delayStateClass(event) {
   return event.delay < 15 ? 'schedule_entry_back--slightly-delayed' : 'schedule_entry_back--delayed';
 }
 
+function rowStyle(index) {
+  return {
+    '--row-index': index,
+    transitionDuration: `${1.5 + index * 0.25}s`,
+  };
+}
+
 const TITLE_MIN_FONT_SIZE = 32;
-const titleMaxSizes = new WeakMap();
 
 function fitTitle(el) {
   const text = el.firstElementChild;
   if (!text) return;
 
-  let max = titleMaxSizes.get(el);
-  if (!max) {
-    max = parseFloat(window.getComputedStyle(el).fontSize) || TITLE_MIN_FONT_SIZE;
-    titleMaxSizes.set(el, max);
-  }
-
   const setSize = size => el.style.setProperty('font-size', `${size}px`, 'important');
 
-  setSize(max);
+  el.style.removeProperty('font-size');
+
+  const max = parseFloat(window.getComputedStyle(el).fontSize) || TITLE_MIN_FONT_SIZE;
 
   const available = el.clientWidth;
   if (!available) return;
@@ -155,8 +166,8 @@ function onEnter(node, done) {
   // call the done callback to indicate transition end
   // optional if used in combination with CSS
   setTimeout(() => {
-    for (let i = 0; i < 3; i++) {
-      if (node.children[i]) node.children[i].classList.add('animation-done');
+    for (let i = 0; i < node.children.length; i++) {
+      node.children[i].classList.add('animation-done');
     }
   }, 1000);
 
@@ -172,8 +183,8 @@ function onBeforeLeave() {
 function onLeave(node, done) {
   // call the done callback to indicate transition end
   // optional if used in combination with CSS
-  for (let i = 0; i < 3; i++) {
-    if (node.children[i]) node.children[i].classList.remove('animation-done');
+  for (let i = 0; i < node.children.length; i++) {
+    node.children[i].classList.remove('animation-done');
   }
 
   setTimeout(() => {
@@ -194,29 +205,37 @@ function onLeave(node, done) {
     >
       <div
         :key="currentPageIndex"
-        class="animation flex absolute z-30 mt-28 h-[100vh] w-[100vw] space-y-8 justify-center overflow-hidden"
+        class="animation flex absolute z-30 mt-28 h-[100vh] w-[100vw] justify-center overflow-hidden"
+        :class="{ 'is-portrait': isPortrait }"
       >
         <!--                <TransitionGroup name="list">-->
         <div
-          v-for="item in currentSlide"
+          v-for="(item, index) in currentSlide"
           :key="item.id"
-          class="flex flex-row space_text items-start items-baseline"
-          :class="[isThemeFont ? 'theme-font' : 'theme-font-secondary']"
+          :style="rowStyle(index)"
+          class="flex flex-row space_text"
+          :class="[isThemeFont ? 'theme-font' : 'theme-font-secondary', isPortrait ? 'items-start' : 'items-baseline']"
         >
           <div class="relative flex flex-col schedule_entry justify-center pl-10 pr-2">
             <div v-fit-title class="relative flex flex-row flex-nowrap heading-font schedule_title">
               <span class="schedule_title_text">{{ item.title }}</span>
             </div>
-            <div class="relative flex flex-row flex-nowrap text-justify text-5xl subtext">
+            <div
+              class="relative flex flex-row flex-nowrap text-justify subtext"
+              :class="isPortrait ? 'text-3xl' : 'text-5xl'"
+            >
               {{ item.room.name }}
             </div>
           </div>
           <div
-            class="relative flex flex-col text-center items-center schedule_entry_back pt-7"
-            :class="delayStateClass(item)"
+            class="relative flex flex-col text-center items-center schedule_entry_back"
+            :class="[delayStateClass(item), isPortrait ? 'pt-4' : 'pt-7']"
           >
             <div class="relative flex flex-row text-justify items-start">
-              <div class="relative flex flex-row flex-shrink-0 flex-nowrap items-baseline text-justify text-6xl">
+              <div
+                class="relative flex flex-row flex-shrink-0 flex-nowrap items-baseline text-justify"
+                :class="isPortrait ? 'text-4xl' : 'text-6xl'"
+              >
                 <div class="flex flex-row flex-nowrap text-justify align-top">
                   {{ DateTime.fromISO(item.starts_at).toFormat('HH:mm') }}
                   –
@@ -229,12 +248,17 @@ function onLeave(node, done) {
             <div class="relative flex flex-row flex-nowrap">
               <div
                 v-if="item.delay"
-                class="relative flex flex-row flex-nowrap text-justify align-top text-[2vw] subtext"
+                class="relative flex flex-row flex-nowrap text-justify align-top subtext"
+                :class="isPortrait ? 'text-xl' : 'text-[2vw]'"
               >
                 <div v-if="item.delay < 15" class="flex text-left">Slightly Delayed</div>
                 <div v-else class="flex text-left">Delayed: {{ item.delay }}min</div>
               </div>
-              <div v-else class="relative flex flex-row flex-nowrap text-justify align-top text-[2vw] subtext">
+              <div
+                v-else
+                class="relative flex flex-row flex-nowrap text-justify align-top subtext"
+                :class="isPortrait ? 'text-xl' : 'text-[2vw]'"
+              >
                 On Time
               </div>
             </div>

@@ -4,6 +4,7 @@ import { DateTime } from 'luxon';
 import IconRouter from '@/Projects/System/Components/IconRouter.vue';
 import chunkArray from '@/chunkArray.js';
 import truncate from '@/truncate.js';
+import { useScreenOrientation } from '@/screenOrientation.js';
 
 const props = defineProps({
   title: {
@@ -15,8 +16,8 @@ const props = defineProps({
     default: [],
   },
   appScreen: {
-    type: Array,
-    default: [],
+    type: Object,
+    default: null,
   },
   rooms: {
     type: Array,
@@ -30,6 +31,8 @@ const props = defineProps({
 
 const currentTime = ref(DateTime.now());
 const currentPageIndex = ref(0);
+
+const { isPortrait } = useScreenOrientation(() => props.appScreen);
 
 const nextEventByRoom = computed(() => {
   const byRoom = {};
@@ -54,8 +57,10 @@ function containsOnly(title) {
   return title.includes('Only') || title.includes('only') || title.includes('ONLY');
 }
 
+const roomsPerPage = computed(() => (isPortrait.value ? 4 : 3));
+
 const signPostPages = computed(() => {
-  return chunkArray(props.rooms, 3);
+  return chunkArray(props.rooms, roomsPerPage.value);
 });
 
 const currentSignPostPage = computed(() => {
@@ -81,34 +86,44 @@ onMounted(() => {
   <Transition mode="out-in">
     <div :key="currentPageIndex" class="h-screen overflow-hidden flex flex-col justify-between w-screen">
       <div
-        v-for="(item, _index) in currentSignPostPage"
+        v-for="item in currentSignPostPage"
+        :key="item.id"
         class="flex flex-col relative z-30 text-white magic-text theme-font w-[100vw]"
       >
-        <div class="mx-16 my-16 flex flex-row flex-nowrap items-center">
-          <div v-if="item.pivot.icon" class="min-w-[200px] mr-6">
+        <div class="flex flex-row flex-nowrap items-center" :class="isPortrait ? 'mx-8 my-10' : 'mx-16 my-16'">
+          <div v-if="item.pivot.icon" :class="isPortrait ? 'min-w-[11vw] mr-4' : 'min-w-[200px] mr-6'">
             <IconRouter
               path="EF30"
-              class="fill-white w-[200px] svgIconGlow"
+              class="fill-white svgIconGlow"
+              :class="isPortrait ? 'w-[11vw]' : 'w-[200px]'"
               :icon="item.pivot.icon"
               :mirror="item.pivot.mirror"
               :rotation="item.pivot.rotation"
             ></IconRouter>
           </div>
-          <div class="flex flex-1 flex-col w-[70vw]">
+          <div class="flex flex-1 flex-col" :class="isPortrait ? 'min-w-0' : 'w-[70vw]'">
             <div class="flex flex-row items-baseline">
-              <div class="flex text-[7vw] text-left items-center leading-none">
+              <div
+                class="flex text-left items-center"
+                :class="isPortrait ? 'text-[4.6vw] leading-tight break-words min-w-0' : 'text-[7vw] leading-none'"
+              >
                 {{ item.name }}
               </div>
 
               <div
                 v-if="item.name !== item.venue_name && item.venue_name"
-                class="flex text-[2.5vw] text-left items-center leading-none ml-8"
+                class="flex text-left items-center leading-none"
+                :class="isPortrait ? 'text-[2vw] ml-3' : 'text-[2.5vw] ml-8'"
               >
                 ( {{ item.venue_name }} )
               </div>
             </div>
 
-            <div v-if="nextEventByRoom[item.id]" class="flex text-[5vw] leading-none">
+            <div
+              v-if="nextEventByRoom[item.id]"
+              class="flex leading-none"
+              :class="isPortrait ? 'text-[2.8vw]' : 'text-[5vw]'"
+            >
               <div class="mr-3">
                 <div
                   v-if="DateTime.fromISO(nextEventByRoom[item.id].starts_at) < DateTime.local()"
@@ -124,10 +139,11 @@ onMounted(() => {
                     {{ truncate(nextEventByRoom[item.id].title.split(' – ')[0], 30) }}
                   </div>
                   <div
-                    :class="{
-                      'text-green-300': containsOnly(nextEventByRoom[item.id].title),
-                    }"
-                    class="text-[3vw] leading-none"
+                    :class="[
+                      { 'text-green-300': containsOnly(nextEventByRoom[item.id].title) },
+                      isPortrait ? 'text-[2vw]' : 'text-[3vw]',
+                    ]"
+                    class="leading-none"
                     v-if="nextEventByRoom[item.id].title.split(' – ')[1]"
                   >
                     {{ truncate(nextEventByRoom[item.id].title.split(' – ')[1], 45) }}
@@ -137,18 +153,23 @@ onMounted(() => {
             </div>
           </div>
 
-          <div class="flex flex-0 flex-row text-white w-[20vw] space-x-8">
+          <div
+            class="flex flex-0 flex-row text-white"
+            :class="isPortrait ? 'w-[13vw] flex-shrink-0 space-x-3' : 'w-[20vw] space-x-8'"
+          >
             <IconRouter
               v-if="item.pivot.flags ? item.pivot.flags.includes('wheelchair') : false"
               path="EF30"
-              class="flex fill-white w-[5vw] svgIconGlow"
+              class="flex fill-white svgIconGlow"
+              :class="isPortrait ? 'w-[6vw]' : 'w-[5vw]'"
               icon="Wheelchair"
             ></IconRouter>
 
             <IconRouter
               v-if="item.pivot.flags ? item.pivot.flags.includes('first_aid') : false"
               path="EF30"
-              class="flex w-[5vw] svgIconGlow"
+              class="flex svgIconGlow"
+              :class="isPortrait ? 'w-[6vw]' : 'w-[5vw]'"
               icon="FirstAid"
             ></IconRouter>
           </div>
