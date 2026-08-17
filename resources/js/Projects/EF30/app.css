@@ -135,32 +135,25 @@
   white-space: nowrap;
 }
 
-.animation {
-  --entry-width: 1670px;
-  --entry-left: 110px;
-  --entry-offscreen: 2500px;
-  --entry-top: 20px;
-  --entry-step: 306px;
-}
-
+/* Rows are absolutely positioned; `top` is set inline per row by Schedule.vue. */
 .animation > div {
-  --row-index: 0;
   position: absolute;
-  width: var(--entry-width);
-  left: var(--entry-offscreen);
-  top: calc(var(--entry-top) + var(--row-index) * var(--entry-step));
-  transition-property: all;
+  width: 1670px;
+  left: 2500px;
+  transition-property: left;
 }
 
 .animation > div.animation-done {
-  left: var(--entry-left);
+  left: 110px;
 }
 
-.animation.is-portrait {
-  --entry-width: 86vw;
-  --entry-left: 7vw;
-  --entry-offscreen: 105vw;
-  --entry-step: 250px;
+.animation.is-portrait > div {
+  width: 86vw;
+  left: 105vw;
+}
+
+.animation.is-portrait > div.animation-done {
+  left: 7vw;
 }
 
 .animation.is-portrait .schedule_entry,

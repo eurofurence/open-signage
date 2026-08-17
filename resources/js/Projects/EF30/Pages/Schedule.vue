@@ -112,14 +112,21 @@ function delayStateClass(event) {
   return event.delay < 15 ? 'schedule_entry_back--slightly-delayed' : 'schedule_entry_back--delayed';
 }
 
+const ROW_TOP = 20;
+const ROW_STEP_LANDSCAPE = 306;
+const ROW_STEP_PORTRAIT = 250;
+
 function rowStyle(index) {
+  const step = isPortrait.value ? ROW_STEP_PORTRAIT : ROW_STEP_LANDSCAPE;
+
   return {
-    '--row-index': index,
+    top: `${ROW_TOP + index * step}px`,
     transitionDuration: `${1.5 + index * 0.25}s`,
   };
 }
 
 const TITLE_MIN_FONT_SIZE = 32;
+const TITLE_MAX_FIT_STEPS = 8;
 
 function fitTitle(el) {
   const text = el.firstElementChild;
@@ -140,8 +147,10 @@ function fitTitle(el) {
   let size = Math.max(TITLE_MIN_FONT_SIZE, Math.floor((max * available) / natural));
   setSize(size);
 
-  while (size > TITLE_MIN_FONT_SIZE && text.getBoundingClientRect().width > available) {
+  let steps = TITLE_MAX_FIT_STEPS;
+  while (steps > 0 && size > TITLE_MIN_FONT_SIZE && text.getBoundingClientRect().width > available) {
     size -= 1;
+    steps -= 1;
     setSize(size);
   }
 }
