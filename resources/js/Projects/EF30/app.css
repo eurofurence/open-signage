@@ -106,6 +106,24 @@
   width: 400px;
 }
 
+.schedule_entry_back--slightly-delayed {
+  color: #091834 !important;
+  background: #f8d032c9;
+}
+
+.schedule_entry_back--slightly-delayed .subtext {
+  color: #091834;
+}
+
+.schedule_entry_back--delayed {
+  color: #ffffff !important;
+  background: #b42f2fc9;
+}
+
+.schedule_entry_back--delayed .subtext {
+  color: #ffffff;
+}
+
 .schedule_title {
   font-size: 68px;
   overflow: hidden;

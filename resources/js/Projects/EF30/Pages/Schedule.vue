@@ -97,6 +97,12 @@ onMounted(() => {
   });
 });
 
+function delayStateClass(event) {
+  if (!event.delay) return null;
+
+  return event.delay < 15 ? 'schedule_entry_back--slightly-delayed' : 'schedule_entry_back--delayed';
+}
+
 const TITLE_MIN_FONT_SIZE = 32;
 const titleMaxSizes = new WeakMap();
 
@@ -205,7 +211,10 @@ function onLeave(node, done) {
               {{ item.room.name }}
             </div>
           </div>
-          <div class="relative flex flex-col text-center items-center schedule_entry_back pt-7">
+          <div
+            class="relative flex flex-col text-center items-center schedule_entry_back pt-7"
+            :class="delayStateClass(item)"
+          >
             <div class="relative flex flex-row text-justify items-start">
               <div class="relative flex flex-row flex-shrink-0 flex-nowrap items-baseline text-justify text-6xl">
                 <div class="flex flex-row flex-nowrap text-justify align-top">
@@ -222,10 +231,8 @@ function onLeave(node, done) {
                 v-if="item.delay"
                 class="relative flex flex-row flex-nowrap text-justify align-top text-[2vw] subtext"
               >
-                <div v-if="item.delay < 15" class="flex text-left" style="color: #f8d032 !important">
-                  Slightly Delayed
-                </div>
-                <div v-else class="flex text-left" style="color: #e73d3d !important">Delayed: {{ item.delay }}min</div>
+                <div v-if="item.delay < 15" class="flex text-left">Slightly Delayed</div>
+                <div v-else class="flex text-left">Delayed: {{ item.delay }}min</div>
               </div>
               <div v-else class="relative flex flex-row flex-nowrap text-justify align-top text-[2vw] subtext">
                 On Time
