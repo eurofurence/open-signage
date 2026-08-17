@@ -123,5 +123,39 @@ class SystemSeeder extends Seeder
                 ],
             ],
         ]);
+
+        $weather = $project->pages()->updateOrCreate([
+            'component' => 'Weather',
+        ], [
+            'name' => 'System - Weather',
+            'component' => 'Weather',
+            'schema' => [
+                [
+                    'name' => 'Forecast Hours (default 24)',
+                    'property' => 'hoursAhead',
+                    'type' => 'TextInput',
+                ],
+                [
+                    'name' => 'Hours Of Past Context (default 4)',
+                    'property' => 'pastHours',
+                    'type' => 'TextInput',
+                ],
+                [
+                    'name' => 'Refresh Interval In Seconds (default 300)',
+                    'property' => 'refreshSeconds',
+                    'type' => 'TextInput',
+                ],
+                [
+                    'name' => 'Show the hourly forecast chart',
+                    'property' => 'showChart',
+                    'type' => 'Checkbox',
+                ],
+                [
+                    'name' => 'Show the index breakdown next to the score',
+                    'property' => 'showBreakdown',
+                    'type' => 'Checkbox',
+                ],
+            ],
+        ]);
     }
 }

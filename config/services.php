@@ -51,6 +51,13 @@ return [
         'domain' => env('PRETALX_DOMAIN', 'cfp.eurofurence.org'),
         'schedule' => env('PRETALX_SCHEDULE'),
     ],
+
+    'weather' => [
+        'url' => env('WEATHER_API_URL', 'https://weather.eurofurence.org/api/summary?lang=en'),
+        'ttl' => env('WEATHER_CACHE_TTL', 120),
+        'timeout' => env('WEATHER_TIMEOUT', 10),
+    ],
+
     'artshow' => [
         'enabled' => env('ARTSHOW_SYNC_ENABLED', false),
         'images' => env('ARTSHOW_IMAGES_URL', 'https://artshow.eurofurence.org/signage/images.json'),

@@ -1,10 +1,11 @@
 <?php
 
+use App\Http\Controllers\API\AnnouncementController;
 use App\Http\Controllers\API\PlaylistController;
 use App\Http\Controllers\API\ScreenController;
+use App\Http\Controllers\API\WeatherController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\API\AnnouncementController;
 
 /*
 |--------------------------------------------------------------------------
@@ -25,4 +26,5 @@ Route::name('api.')->group(function () {
     Route::get('/announcement', [AnnouncementController::class, 'list'])->name('announcement.list');
     Route::get('/screen/{screenId}', [ScreenController::class, 'get'])->name('screen.get');
     Route::get('/playlist/{playlistId}', [PlaylistController::class, 'get'])->name('playlist.get');
+    Route::get('/weather', [WeatherController::class, 'get'])->name('weather.get');
 });
