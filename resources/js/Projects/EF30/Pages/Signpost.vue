@@ -57,6 +57,24 @@ function containsOnly(title) {
   return title.includes('Only') || title.includes('only') || title.includes('ONLY');
 }
 
+function roomNameParts(room) {
+  return room.name.split(/\s[–-]\s/);
+}
+
+function roomName(room) {
+  return roomNameParts(room)[0].trim();
+}
+
+function roomVenue(room) {
+  if (room.venue_name) {
+    return room.venue_name;
+  }
+
+  const parts = roomNameParts(room);
+
+  return parts.length > 1 ? parts.slice(1).join(' – ').trim() : null;
+}
+
 const roomsPerPage = computed(() => (isPortrait.value ? 4 : 3));
 
 const signPostPages = computed(() => {
@@ -74,7 +92,7 @@ onMounted(() => {
   const pageSwitcher = setInterval(() => {
     const pageCount = signPostPages.value.length;
     currentPageIndex.value = pageCount === 0 ? 0 : (currentPageIndex.value + 1) % pageCount;
-  }, props.pageSwitchingTimer);
+  }, props.pageSwitchingTimer || 15000);
   onUnmounted(() => {
     clearInterval(interval);
     clearInterval(pageSwitcher);
@@ -90,41 +108,39 @@ onMounted(() => {
         :key="item.id"
         class="flex flex-col relative z-30 text-white magic-text theme-font w-[100vw]"
       >
-        <div class="flex flex-row flex-nowrap items-center" :class="isPortrait ? 'mx-8 my-10' : 'mx-16 my-16'">
-          <div v-if="item.pivot.icon" :class="isPortrait ? 'min-w-[11vw] mr-4' : 'min-w-[200px] mr-6'">
+        <div class="flex flex-row flex-nowrap items-center" :class="isPortrait ? 'mx-8 my-10' : 'mx-16 my-10'">
+          <div v-if="item.pivot.icon" :class="isPortrait ? 'min-w-[11vw] mr-4' : 'min-w-[150px] mr-6'">
             <IconRouter
               path="EF30"
               class="fill-white svgIconGlow"
-              :class="isPortrait ? 'w-[11vw]' : 'w-[200px]'"
+              :class="isPortrait ? 'w-[11vw]' : 'w-[150px]'"
               :icon="item.pivot.icon"
               :mirror="item.pivot.mirror"
               :rotation="item.pivot.rotation"
             ></IconRouter>
           </div>
-          <div class="flex flex-1 flex-col" :class="isPortrait ? 'min-w-0' : 'w-[70vw]'">
-            <div class="flex flex-row items-baseline">
-              <div
-                class="flex text-left items-center"
-                :class="isPortrait ? 'text-[4.6vw] leading-tight break-words min-w-0' : 'text-[7vw] leading-none'"
-              >
-                {{ item.name }}
-              </div>
+          <div class="flex flex-1 flex-col min-w-0">
+            <div
+              class="text-left"
+              :class="isPortrait ? 'text-[4.6vw] leading-tight break-words' : 'text-[5.5vw] leading-none truncate'"
+            >
+              {{ roomName(item) }}
+            </div>
 
-              <div
-                v-if="item.name !== item.venue_name && item.venue_name"
-                class="flex text-left items-center leading-none"
-                :class="isPortrait ? 'text-[2vw] ml-3' : 'text-[2.5vw] ml-8'"
-              >
-                ( {{ item.venue_name }} )
-              </div>
+            <div
+              v-if="roomVenue(item)"
+              class="text-left leading-none text-[2vw]"
+              :class="isPortrait ? 'break-words' : 'truncate'"
+            >
+              ( {{ roomVenue(item) }} )
             </div>
 
             <div
               v-if="nextEventByRoom[item.id]"
               class="flex leading-none"
-              :class="isPortrait ? 'text-[2.8vw]' : 'text-[5vw]'"
+              :class="isPortrait ? 'text-[2.8vw]' : 'text-[4vw]'"
             >
-              <div class="mr-3">
+              <div class="mr-3 flex-shrink-0 whitespace-nowrap">
                 <div
                   v-if="DateTime.fromISO(nextEventByRoom[item.id].starts_at) < DateTime.local()"
                   class="text-left leading-none"
@@ -133,21 +149,19 @@ onMounted(() => {
                 </div>
                 <div v-else class="text-left leading-none items-center">Next:</div>
               </div>
-              <div>
-                <div>
-                  <div class="leading-none" v-if="nextEventByRoom[item.id].title.split(' – ')[0]">
-                    {{ truncate(nextEventByRoom[item.id].title.split(' – ')[0], 30) }}
-                  </div>
-                  <div
-                    :class="[
-                      { 'text-green-300': containsOnly(nextEventByRoom[item.id].title) },
-                      isPortrait ? 'text-[2vw]' : 'text-[3vw]',
-                    ]"
-                    class="leading-none"
-                    v-if="nextEventByRoom[item.id].title.split(' – ')[1]"
-                  >
-                    {{ truncate(nextEventByRoom[item.id].title.split(' – ')[1], 45) }}
-                  </div>
+              <div class="flex-1 min-w-0">
+                <div class="leading-none truncate" v-if="nextEventByRoom[item.id].title.split(' – ')[0]">
+                  {{ truncate(nextEventByRoom[item.id].title.split(' – ')[0], 30) }}
+                </div>
+                <div
+                  :class="[
+                    { 'text-green-300': containsOnly(nextEventByRoom[item.id].title) },
+                    isPortrait ? 'text-[2vw]' : 'text-[2.5vw]',
+                  ]"
+                  class="leading-none truncate"
+                  v-if="nextEventByRoom[item.id].title.split(' – ')[1]"
+                >
+                  {{ truncate(nextEventByRoom[item.id].title.split(' – ')[1], 45) }}
                 </div>
               </div>
             </div>
@@ -155,13 +169,13 @@ onMounted(() => {
 
           <div
             class="flex flex-0 flex-row text-white"
-            :class="isPortrait ? 'w-[13vw] flex-shrink-0 space-x-3' : 'w-[20vw] space-x-8'"
+            :class="isPortrait ? 'w-[13vw] flex-shrink-0 space-x-3' : 'w-[12vw] flex-shrink-0 space-x-6'"
           >
             <IconRouter
               v-if="item.pivot.flags ? item.pivot.flags.includes('wheelchair') : false"
               path="EF30"
               class="flex fill-white svgIconGlow"
-              :class="isPortrait ? 'w-[6vw]' : 'w-[5vw]'"
+              :class="isPortrait ? 'w-[6vw]' : 'w-[4vw]'"
               icon="Wheelchair"
             ></IconRouter>
 
@@ -169,7 +183,7 @@ onMounted(() => {
               v-if="item.pivot.flags ? item.pivot.flags.includes('first_aid') : false"
               path="EF30"
               class="flex svgIconGlow"
-              :class="isPortrait ? 'w-[6vw]' : 'w-[5vw]'"
+              :class="isPortrait ? 'w-[6vw]' : 'w-[4vw]'"
               icon="FirstAid"
             ></IconRouter>
           </div>
